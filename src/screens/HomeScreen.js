@@ -552,7 +552,10 @@ const HomeScreen = ({ navigation }) => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {displayItems.map((item) => renderCurrencyItem(item))}
+          {displayItems.map((item) => {
+            const uniqueKey = `${item.type}-${item.code}`;
+            return <React.Fragment key={uniqueKey}>{renderCurrencyItem(item)}</React.Fragment>;
+          })}
         </ScrollView>
 
       {/* 計算機 - 浮動在底部 - 5x4 佈局 */}
