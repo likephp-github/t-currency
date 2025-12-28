@@ -40,12 +40,12 @@ export default function App() {
               animation: 'slide_from_bottom'
             }}
           />
-          <Stack.Screen 
-            name="MoreSettings" 
+          <Stack.Screen
+            name="MoreSettings"
             component={MoreSettingsScreen}
             options={{
-              presentation: 'card',
-              animation: 'slide_from_right'
+              presentation: 'modal',
+              animation: 'slide_from_bottom'
             }}
           />
         </Stack.Navigator>

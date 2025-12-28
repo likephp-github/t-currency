@@ -229,7 +229,10 @@ const SettingsScreen = ({ navigation }) => {
         {/* 更多設置 */}
         <TouchableOpacity
           style={styles.moreSettings}
-          onPress={() => navigation.navigate('MoreSettings')}
+          onPress={() => {
+            console.log('更多設置按鈕被點擊');
+            navigation.navigate('MoreSettings');
+          }}
         >
           <Text style={styles.settingLabel}>{t('moreSettings')}</Text>
           <Text style={styles.chevron}>›</Text>
