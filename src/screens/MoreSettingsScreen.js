@@ -8,13 +8,18 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ScrollView,
-  Image
+  Image,
+  Switch
 } from 'react-native';
 import { useApp } from '../contexts/AppContext';
 
 const MoreSettingsScreen = ({ navigation }) => {
   const { t, settings, saveSettings } = useApp();
   const [isFlagModalVisible, setFlagModalVisible] = useState(false);
+
+  const handleToggle = (key) => {
+    saveSettings({ [key]: !settings[key] });
+  };
 
   // Available flag options for NTD (Taiwan)
   const flagOptions = [
@@ -107,14 +112,14 @@ const MoreSettingsScreen = ({ navigation }) => {
             <Text style={styles.settingLabel}>{t('changeFlag')}</Text>
             <View style={styles.valueContainer}>
               {settings.customNTDFlag === 'CUSTOM_FLAG_1' ? (
-                <Image 
-                  source={require('../../assets/custom-flag.jpg')} 
-                  style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
+                <Image
+                  source={require('../../assets/custom-flag.jpg')}
+                  style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }}
                 />
               ) : settings.customNTDFlag === 'CUSTOM_FLAG_2' ? (
-                <Image 
-                  source={require('../../assets/formosa-flag.png')} 
-                  style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }} 
+                <Image
+                  source={require('../../assets/formosa-flag.png')}
+                  style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }}
                 />
               ) : (
                 <Text style={styles.valueText}>{settings.customNTDFlag || '🇹🇼'}</Text>
@@ -122,6 +127,26 @@ const MoreSettingsScreen = ({ navigation }) => {
               <Text style={styles.chevron}>›</Text>
             </View>
           </TouchableOpacity>
+
+          <View style={styles.settingItem}>
+            <Text style={styles.settingLabel}>{t('chickenCutletRate')}</Text>
+            <Switch
+              value={settings.chickenCutletRate || false}
+              onValueChange={() => handleToggle('chickenCutletRate')}
+              trackColor={{ false: '#E0E0E0', true: '#34C759' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View style={styles.settingItem}>
+            <Text style={styles.settingLabel}>{t('bubbleTeaRate')}</Text>
+            <Switch
+              value={settings.bubbleTeaRate || false}
+              onValueChange={() => handleToggle('bubbleTeaRate')}
+              trackColor={{ false: '#E0E0E0', true: '#34C759' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

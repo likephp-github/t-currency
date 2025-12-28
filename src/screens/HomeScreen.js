@@ -154,6 +154,10 @@ const HomeScreen = ({ navigation }) => {
 
   // 渲染右滑按鈕（切換）
   const renderRightActions = (currencyCode) => {
+    if (currencyCode === 'TWD') {
+      return null;
+    }
+    
     return (
       <View style={styles.replaceButton}>
         <Text style={styles.replaceButtonText}>{t('replace')}</Text>

@@ -96,6 +96,19 @@ const SettingsScreen = ({ navigation }) => {
               {settings.language === 'ja' && <Text style={styles.checkmark}>✓</Text>}
             </TouchableOpacity>
 
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => selectLanguage('ko')}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                settings.language === 'ko' && styles.selectedOptionText
+              ]}>한국어(ko)</Text>
+              {settings.language === 'ko' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setLanguageModalVisible(false)}
@@ -192,7 +205,10 @@ const SettingsScreen = ({ navigation }) => {
           <Text style={styles.settingLabel}>{t('language')}</Text>
           <View style={styles.sourceValue}>
             <Text style={styles.sourceText}>
-              {settings.language === 'zh-TW' ? '中文(zh-TW)' : settings.language === 'ja' ? '日本語(ja)' : 'English(en)'}
+              {settings.language === 'zh-TW' ? '中文(zh-TW)' : 
+               settings.language === 'ja' ? '日本語(ja)' : 
+               settings.language === 'ko' ? '한국어(ko)' : 
+               'English(en)'}
             </Text>
             <Text style={styles.chevron}>›</Text>
           </View>

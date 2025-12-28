@@ -36,7 +36,9 @@ export const TRANSLATIONS = {
     notFound: '找不到相關貨幣',
     selectedCount: '已選擇 {{count}} 種貨幣',
     limitReached: ' (已達上限)',
-    current: '當前'
+    current: '當前',
+    chickenCutletRate: '雞排匯率',
+    bubbleTeaRate: '珍珠奶茶匯率'
   },
   'en': {
     appName: 'TW NO.1',
@@ -75,7 +77,9 @@ export const TRANSLATIONS = {
     notFound: 'No currency found',
     selectedCount: 'Selected {{count}} currencies',
     limitReached: ' (Limit reached)',
-    current: 'Current'
+    current: 'Current',
+    chickenCutletRate: 'Chicken Cutlet Rate',
+    bubbleTeaRate: 'Bubble Tea Rate'
   },
   'ja': {
     appName: '台湾為替',
@@ -114,6 +118,49 @@ export const TRANSLATIONS = {
     notFound: '見つかりませんでした',
     selectedCount: '選択中: {{count}} 通貨',
     limitReached: ' (上限)',
-    current: '現在'
+    current: '現在',
+    chickenCutletRate: 'フライドチキンレート',
+    bubbleTeaRate: 'タピオカティーレート'
+  },
+  'ko': {
+    appName: '대만 환율',
+    settingsTitle: '설정',
+    lastUpdate: '마지막 업데이트',
+    justUpdated: '방금 업데이트',
+    updatedMinutesAgo: '분 전',
+    updatedToday: '오늘 {{time}}',
+    notUpdated: '업데이트 안 됨',
+    showLocalCurrency: '현지 통화',
+    showSymbol: '통화 기호',
+    showExchangeSource: '환율 출처 표시',
+    exchangeSource: '환율 출처',
+    exchangeSourceSimple: 'tCurrency',
+    exchangeSourceMedium: '매매 기준율',
+    defaultAmount: '기본 금액',
+    decimalPlaces: '소수점 자릿수',
+    moreSettings: '더 많은 설정',
+    language: '언어',
+    addCurrency: '+ 통화 추가',
+    delete: '삭제',
+    replace: '변경',
+    loading: '로딩 중...',
+    searchPlaceholder: '통화 검색...',
+    selectCurrency: '통화 선택',
+    cancel: '취소',
+    currencySource: 'tCurrency',
+    languageName: '한국어',
+    replaceCurrencyTitle: '통화 변경 ({{currency}})',
+    selectCurrencyTitle: '통화 선택',
+    selectLanguageTitle: '언어 선택',
+    selectFlagTitle: '국기 선택',
+    changeFlag: '국기 변경',
+    searchCurrencyPlaceholder: '통화 이름 또는 국가',
+    favorites: '즐겨찾기',
+    notFound: '검색 결과 없음',
+    selectedCount: '선택됨: {{count}}개',
+    limitReached: ' (최대)',
+    current: '현재',
+    chickenCutletRate: '치킨 지수',
+    bubbleTeaRate: '버블티 지수'
   }
 };
