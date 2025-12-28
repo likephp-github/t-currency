@@ -183,12 +183,15 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.currencyInfo}>
               <Text style={styles.currencyFlag}>{currency.flag}</Text>
               <View style={styles.currencyDetails}>
-                <Text style={styles.currencyCode}>{currency.code}</Text>
-                {settings.showSymbol && (
+                <Text style={styles.currencyCode}>
+                  {currency.code}
+                  <Text style={styles.currencyName}>{currency.symbol}</Text>
+                </Text>
+                {/* {settings.showSymbol && (
                   <Text style={styles.currencyName}>
-                    {currency.name} {currency.symbol}
+                    {currency.name}
                   </Text>
-                )}
+                )} */}
               </View>
             </View>
 
@@ -615,17 +618,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(63, 81, 181, 0.85)',
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 16,
     paddingVertical: 12,
     paddingBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10
   },
   calcButtons: {
     // Container for all calculator button rows
