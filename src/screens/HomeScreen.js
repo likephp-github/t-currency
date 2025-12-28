@@ -555,30 +555,36 @@ const HomeScreen = ({ navigation }) => {
           {displayItems.map((item) => renderCurrencyItem(item))}
         </ScrollView>
 
-      {/* 計算機 - 浮動在底部 - 4x5 佈局 */}
+      {/* 計算機 - 浮動在底部 - 5x4 佈局 */}
       <BlurView intensity={80} tint="dark" style={styles.calculator}>
         {/* 按鈕區域 */}
         <View style={styles.calcButtons}>
-          {/* 第一行：C ⌫ % ÷ */}
+          {/* 第一行：C 0 00 + × */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={[styles.calcButton, styles.calcClearButton]} onPress={handleClear}>
               <Text style={[styles.calcButtonText, styles.calcClearText]}>C</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.calcButton, styles.calcBackspaceButton]} onPress={handleBackspace}>
-              <Text style={[styles.calcButtonText, styles.calcBackspaceText]}>⌫</Text>
+            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('0')}>
+              <Text style={styles.calcButtonText}>0</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={handlePercent}>
-              <Text style={styles.calcButtonText}>%</Text>
+            <TouchableOpacity style={styles.calcButton} onPress={handleDoubleZero}>
+              <Text style={styles.calcButtonText}>00</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '/' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('/')}
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '+' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('+')}
             >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '/' && styles.calcButtonTextActive]}>÷</Text>
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '+' && styles.calcButtonTextActive]}>+</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === 'x' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('x')}
+            >
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === 'x' && styles.calcButtonTextActive]}>×</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 第二行：7 8 9 × */}
+          {/* 第二行：7 8 9 − ÷ */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('7')}>
               <Text style={styles.calcButtonText}>7</Text>
@@ -590,14 +596,20 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.calcButtonText}>9</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === 'x' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('x')}
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '-' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('-')}
             >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === 'x' && styles.calcButtonTextActive]}>×</Text>
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '-' && styles.calcButtonTextActive]}>−</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '/' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('/')}
+            >
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '/' && styles.calcButtonTextActive]}>÷</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 第三行：4 5 6 − */}
+          {/* 第三行：4 5 6 ⌫ % */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('4')}>
               <Text style={styles.calcButtonText}>4</Text>
@@ -608,15 +620,15 @@ const HomeScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('6')}>
               <Text style={styles.calcButtonText}>6</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '-' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('-')}
-            >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '-' && styles.calcButtonTextActive]}>−</Text>
+            <TouchableOpacity style={[styles.calcButton, styles.calcBackspaceButton]} onPress={handleBackspace}>
+              <Text style={[styles.calcButtonText, styles.calcBackspaceText]}>⌫</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calcButton} onPress={handlePercent}>
+              <Text style={styles.calcButtonText}>%</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 第四行：1 2 3 + */}
+          {/* 第四行：1 2 3 . = */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('1')}>
               <Text style={styles.calcButtonText}>1</Text>
@@ -626,22 +638,6 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('3')}>
               <Text style={styles.calcButtonText}>3</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '+' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('+')}
-            >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '+' && styles.calcButtonTextActive]}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 第五行：0 00 . = */}
-          <View style={styles.calcRow}>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('0')}>
-              <Text style={styles.calcButtonText}>0</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={handleDoubleZero}>
-              <Text style={styles.calcButtonText}>00</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.calcButton} onPress={handleDecimal}>
               <Text style={styles.calcButtonText}>.</Text>
