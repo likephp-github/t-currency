@@ -27,7 +27,7 @@ eas build:configure
 {
   "expo": {
     "name": "極簡匯率",
-    "slug": "currency-converter",
+    "slug": "t-currency",
     "version": "1.0.0",
     "android": {
       "package": "com.yourcompany.currencyconverter",

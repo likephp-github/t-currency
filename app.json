@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "極台匯率",
-    "slug": "currency-converter",
+    "slug": "tcurrency",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,17 +16,25 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.currencyconverter"
+      "bundleIdentifier": "com.hummingfood.tcurrency",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.currencyconverter"
+      "package": "com.hummingfood.tcurrency"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6e5bfb14-2786-4d35-96fa-28d2bd7c4be8"
+      }
     }
   }
 }
