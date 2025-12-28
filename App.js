@@ -8,6 +8,7 @@ import { AppProvider } from './src/contexts/AppContext';
 import HomeScreen from './src/screens/HomeScreen';
 import CurrencySelectionScreen from './src/screens/CurrencySelectionScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import MoreSettingsScreen from './src/screens/MoreSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,6 +38,14 @@ export default function App() {
             options={{
               presentation: 'modal',
               animation: 'slide_from_bottom'
+            }}
+          />
+          <Stack.Screen 
+            name="MoreSettings" 
+            component={MoreSettingsScreen}
+            options={{
+              presentation: 'card',
+              animation: 'slide_from_right'
             }}
           />
         </Stack.Navigator>

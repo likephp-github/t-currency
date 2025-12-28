@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,31 +6,152 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  SafeAreaView
+  SafeAreaView,
+  Modal,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { useApp } from '../contexts/AppContext';
 
 const SettingsScreen = ({ navigation }) => {
-  const { settings, saveSettings, lastUpdate } = useApp();
+  const { settings, saveSettings, lastUpdate, t } = useApp();
+  const [isLanguageModalVisible, setLanguageModalVisible] = useState(false);
+  const [isDecimalModalVisible, setDecimalModalVisible] = useState(false);
 
   const handleToggle = (key) => {
     saveSettings({ [key]: !settings[key] });
   };
+  
+  const handleLanguagePress = () => {
+    setLanguageModalVisible(true);
+  };
 
-  const handleSourceChange = () => {
-    const newSource = settings.exchangeSource === 'SIMPLE' ? 'MEDIUM' : 'SIMPLE';
-    saveSettings({ exchangeSource: newSource });
+  const selectLanguage = (lang) => {
+    saveSettings({ language: lang });
+    setLanguageModalVisible(false);
+  };
+  
+  const handleDecimalPress = () => {
+    setDecimalModalVisible(true);
+  };
+
+  const selectDecimal = (places) => {
+    saveSettings({ decimalPlaces: places });
+    setDecimalModalVisible(false);
   };
 
   const formatUpdateTime = () => {
-    if (!lastUpdate) return '未更新';
+    if (!lastUpdate) return t('notUpdated');
     const hours = lastUpdate.getHours();
-    const minutes = lastUpdate.getMinutes();
-    return `今天${hours}:${minutes.toString().padStart(2, '0')}`;
+    const minutes = lastUpdate.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    return t('updatedToday', { time: timeStr });
   };
+
+  const renderLanguageModal = () => (
+    <Modal
+      visible={isLanguageModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setLanguageModalVisible(false)}
+    >
+      <TouchableWithoutFeedback onPress={() => setLanguageModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('selectLanguageTitle')}</Text>
+            
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => selectLanguage('zh-TW')}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                settings.language === 'zh-TW' && styles.selectedOptionText
+              ]}>中文(zh-TW)</Text>
+              {settings.language === 'zh-TW' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => selectLanguage('en')}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                settings.language === 'en' && styles.selectedOptionText
+              ]}>English(en)</Text>
+              {settings.language === 'en' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => selectLanguage('ja')}
+            >
+              <Text style={[
+                styles.modalOptionText,
+                settings.language === 'ja' && styles.selectedOptionText
+              ]}>日本語(ja)</Text>
+              {settings.language === 'ja' && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+
+  const renderDecimalModal = () => (
+    <Modal
+      visible={isDecimalModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setDecimalModalVisible(false)}
+    >
+      <TouchableWithoutFeedback onPress={() => setDecimalModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('decimalPlaces')}</Text>
+            
+            {[0, 1, 2, 3, 4, 5].map((num, index) => (
+              <React.Fragment key={num}>
+                {index > 0 && <View style={styles.separator} />}
+                <TouchableOpacity
+                  style={styles.modalOption}
+                  onPress={() => selectDecimal(num)}
+                >
+                  <Text style={[
+                    styles.modalOptionText,
+                    settings.decimalPlaces === num && styles.selectedOptionText
+                  ]}>{num}</Text>
+                  {settings.decimalPlaces === num && <Text style={styles.checkmark}>✓</Text>}
+                </TouchableOpacity>
+              </React.Fragment>
+            ))}
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setDecimalModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
+      {renderLanguageModal()}
+      {renderDecimalModal()}
       {/* 標題列 */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -39,7 +160,7 @@ const SettingsScreen = ({ navigation }) => {
         >
           <Text style={styles.backIcon}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>換算設置</Text>
+        <Text style={styles.headerTitle}>{t('settingsTitle')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -47,23 +168,13 @@ const SettingsScreen = ({ navigation }) => {
         {/* 更新資訊 */}
         <View style={styles.updateSection}>
           <Text style={styles.updateIcon}>🔄</Text>
-          <Text style={styles.updateText}>上次更新 {formatUpdateTime()}</Text>
+          <Text style={styles.updateText}>{t('lastUpdate')} {formatUpdateTime()}</Text>
         </View>
 
         {/* 設定項目 */}
         <View style={styles.section}>
           <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>當地貨幣</Text>
-            <Switch
-              value={settings.showLocalCurrency}
-              onValueChange={() => handleToggle('showLocalCurrency')}
-              trackColor={{ false: '#D1D1D6', true: '#34C759' }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>貨幣符號</Text>
+            <Text style={styles.settingLabel}>{t('showSymbol')}</Text>
             <Switch
               value={settings.showSymbol}
               onValueChange={() => handleToggle('showSymbol')}
@@ -71,44 +182,28 @@ const SettingsScreen = ({ navigation }) => {
               thumbColor="#FFFFFF"
             />
           </View>
-
-          <View style={styles.settingItem}>
-            <Text style={styles.settingLabel}>顯示換算匯率源</Text>
-            <Switch
-              value={settings.showExchangeSource}
-              onValueChange={() => handleToggle('showExchangeSource')}
-              trackColor={{ false: '#D1D1D6', true: '#34C759' }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
         </View>
-
-        {/* 換算匯率源 */}
+        
+        {/* 語言設置 */}
         <TouchableOpacity
           style={styles.sourceItem}
-          onPress={handleSourceChange}
+          onPress={handleLanguagePress}
         >
-          <Text style={styles.settingLabel}>換算匯率源</Text>
+          <Text style={styles.settingLabel}>{t('language')}</Text>
           <View style={styles.sourceValue}>
             <Text style={styles.sourceText}>
-              「{settings.exchangeSource === 'SIMPLE' ? 'tCurrency' : '中間價'}」
+              {settings.language === 'zh-TW' ? '中文(zh-TW)' : settings.language === 'ja' ? '日本語(ja)' : 'English(en)'}
             </Text>
             <Text style={styles.chevron}>›</Text>
           </View>
         </TouchableOpacity>
 
-        {/* 貨幣默認值 */}
-        <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingLabel}>貨幣默認值</Text>
-          <View style={styles.valueContainer}>
-            <Text style={styles.valueText}>{settings.defaultAmount}</Text>
-            <Text style={styles.chevron}>›</Text>
-          </View>
-        </TouchableOpacity>
-
         {/* 小數點位數 */}
-        <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingLabel}>小數點位數</Text>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={handleDecimalPress}
+        >
+          <Text style={styles.settingLabel}>{t('decimalPlaces')}</Text>
           <View style={styles.valueContainer}>
             <Text style={styles.valueText}>{settings.decimalPlaces}</Text>
             <Text style={styles.chevron}>›</Text>
@@ -116,14 +211,17 @@ const SettingsScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         {/* 更多設置 */}
-        <TouchableOpacity style={styles.moreSettings}>
-          <Text style={styles.settingLabel}>更多設置</Text>
+        <TouchableOpacity
+          style={styles.moreSettings}
+          onPress={() => navigation.navigate('MoreSettings')}
+        >
+          <Text style={styles.settingLabel}>{t('moreSettings')}</Text>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
 
         {/* 底部連結 */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>tCurrency</Text>
+          <Text style={styles.footerText}>{t('appName')}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -256,6 +354,66 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 16,
     color: '#007AFF'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    width: '100%',
+    maxWidth: 340,
+    paddingTop: 20,
+    alignItems: 'center'
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#000'
+  },
+  modalOption: {
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  modalOptionText: {
+    fontSize: 18,
+    color: '#000'
+  },
+  selectedOptionText: {
+    color: '#007AFF',
+    fontWeight: '600'
+  },
+  separator: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#F0F0F0'
+  },
+  checkmark: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: 'bold'
+  },
+  cancelButton: {
+    width: '100%',
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    marginTop: 8
+  },
+  cancelButtonText: {
+    fontSize: 18,
+    color: '#007AFF',
+    fontWeight: '600'
   }
 });
 

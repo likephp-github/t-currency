@@ -12,7 +12,7 @@ import { useApp } from '../contexts/AppContext';
 import { CURRENCIES, FAVORITE_CURRENCIES } from '../constants/currencies';
 
 const CurrencySelectionScreen = ({ navigation, route }) => {
-  const { selectedCurrencies, toggleCurrency, setSelectedCurrencies } = useApp();
+  const { selectedCurrencies, toggleCurrency, setSelectedCurrencies, t } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
 
   // 獲取替換模式參數
@@ -101,7 +101,7 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
           <Text style={styles.checkmark}>✓</Text>
         )}
         {isCurrent && (
-          <Text style={styles.currentLabel}>當前</Text>
+          <Text style={styles.currentLabel}>{t('current')}</Text>
         )}
       </TouchableOpacity>
     );
@@ -112,7 +112,9 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
       {/* 標題列 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          {replaceMode ? `替換貨幣 (${replaceCurrency})` : '切換貨幣'}
+          {replaceMode 
+            ? t('replaceCurrencyTitle', { currency: replaceCurrency }) 
+            : t('selectCurrencyTitle')}
         </Text>
         <TouchableOpacity
           style={styles.closeButton}
@@ -127,7 +129,7 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           style={styles.searchInput}
-          placeholder="貨幣名稱或國家/地區"
+          placeholder={t('searchCurrencyPlaceholder')}
           placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -139,7 +141,7 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
           {/* 常用貨幣 */}
           {!searchQuery && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>常用</Text>
+              <Text style={styles.sectionTitle}>{t('favorites')}</Text>
               {favoriteCurrenciesList.map(renderCurrencyItem)}
             </View>
           )}
@@ -156,7 +158,7 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
 
           {filteredCurrencies.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>找不到相關貨幣</Text>
+              <Text style={styles.emptyText}>{t('notFound')}</Text>
             </View>
           )}
         </ScrollView>
@@ -176,8 +178,8 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
       {/* 已選擇計數 */}
       <View style={styles.footer}>
         <Text style={styles.selectedCount}>
-          已選擇 {selectedCurrencies.length} 種貨幣
-          {selectedCurrencies.length >= 6 && ' (已達上限)'}
+          {t('selectedCount', { count: selectedCurrencies.length })}
+          {selectedCurrencies.length >= 6 && t('limitReached')}
         </Text>
       </View>
     </SafeAreaView>
@@ -228,7 +230,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#000',
-    paddingVertical: 8
+    paddingVertical: 8,
+    outlineStyle: 'none' // Web fix for outline
   },
   content: {
     flex: 1,

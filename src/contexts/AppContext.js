@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { DEFAULT_SELECTED_CURRENCIES } from '../constants/currencies';
+import { TRANSLATIONS } from '../i18n/translations';
 
 const AppContext = createContext();
 
@@ -28,7 +29,8 @@ export const AppProvider = ({ children }) => {
     showExchangeSource: true,
     exchangeSource: 'SIMPLE',
     defaultAmount: 100,
-    decimalPlaces: 2
+    decimalPlaces: 2,
+    language: 'zh-TW'
   });
 
   // 載入設定
@@ -124,7 +126,20 @@ export const AppProvider = ({ children }) => {
     saveSelectedCurrencies(newSelected);
   };
 
-  const value = {
+  // 翻譯函數 - 使用 useCallback 優化
+  const t = useCallback((key, params = {}) => {
+    const lang = settings.language || 'zh-TW';
+    let text = (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) ? TRANSLATIONS[lang][key] : key;
+    
+    // 簡單的參數替換 {{param}}
+    Object.keys(params).forEach(param => {
+      text = text.replace(`{{${param}}}`, params[param]);
+    });
+    
+    return text;
+  }, [settings.language]);
+
+  const value = useMemo(() => ({
     // 狀態
     selectedCurrencies,
     exchangeRates,
@@ -138,8 +153,9 @@ export const AppProvider = ({ children }) => {
     toggleCurrency,
     fetchExchangeRates,
     refreshExchangeRates,
-    saveSettings
-  };
+    saveSettings,
+    t
+  }), [selectedCurrencies, exchangeRates, baseCurrency, loading, lastUpdate, settings, t]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

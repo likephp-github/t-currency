@@ -7,10 +7,12 @@ import {
   TextInput,
   ActivityIndicator,
   RefreshControl,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { BlurView } from 'expo-blur';
 import { useApp } from '../contexts/AppContext';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { CURRENCIES } from '../constants/currencies';
@@ -23,7 +25,8 @@ const HomeScreen = ({ navigation }) => {
     refreshExchangeRates,
     lastUpdate,
     settings,
-    setSelectedCurrencies
+    setSelectedCurrencies,
+    t
   } = useApp();
 
   const [amounts, setAmounts] = useState({});
@@ -84,12 +87,19 @@ const HomeScreen = ({ navigation }) => {
 
   // 獲取貨幣資訊
   const getCurrencyInfo = (code) => {
-    return CURRENCIES.find(c => c.code === code) || {
+    const currency = CURRENCIES.find(c => c.code === code) || {
       code,
       name: code,
       symbol: '',
       flag: ''
     };
+
+    // 如果是台幣且有自訂國旗，使用自訂國旗
+    if (code === 'TWD' && settings.customNTDFlag) {
+      return { ...currency, flag: settings.customNTDFlag };
+    }
+
+    return currency;
   };
 
   // 格式化更新時間
@@ -98,12 +108,13 @@ const HomeScreen = ({ navigation }) => {
     const now = new Date();
     const diff = Math.floor((now - lastUpdate) / 1000 / 60);
 
-    if (diff < 1) return '剛剛更新';
-    if (diff < 60) return `${diff}分鐘前更新`;
+    if (diff < 1) return t('justUpdated');
+    if (diff < 60) return `${diff}${t('updatedMinutesAgo')}`;
 
     const hours = now.getHours();
-    const minutes = now.getMinutes();
-    return `今天${hours}:${minutes.toString().padStart(2, '0')}更新`;
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    return t('updatedToday', { time: timeStr });
   };
 
   // 刪除貨幣
@@ -136,7 +147,7 @@ const HomeScreen = ({ navigation }) => {
 
     return (
       <View style={styles.deleteButton}>
-        <Text style={styles.deleteButtonText}>刪除</Text>
+        <Text style={styles.deleteButtonText}>{t('delete')}</Text>
       </View>
     );
   };
@@ -145,7 +156,7 @@ const HomeScreen = ({ navigation }) => {
   const renderRightActions = (currencyCode) => {
     return (
       <View style={styles.replaceButton}>
-        <Text style={styles.replaceButtonText}>切換</Text>
+        <Text style={styles.replaceButtonText}>{t('replace')}</Text>
       </View>
     );
   };
@@ -181,17 +192,26 @@ const HomeScreen = ({ navigation }) => {
           ]}
         >
             <View style={styles.currencyInfo}>
-              <Text style={styles.currencyFlag}>{currency.flag}</Text>
+              {currency.flag === 'CUSTOM_FLAG_1' ? (
+                <Image 
+                  source={require('../../assets/custom-flag.jpg')} 
+                  style={[styles.currencyFlagImage, { width: 32, height: 32, borderRadius: 16, marginRight: 16 }]} 
+                />
+              ) : currency.flag === 'CUSTOM_FLAG_2' ? (
+                <Image 
+                  source={require('../../assets/formosa-flag.png')} 
+                  style={[styles.currencyFlagImage, { width: 32, height: 32, borderRadius: 16, marginRight: 16 }]} 
+                />
+              ) : (
+                <Text style={styles.currencyFlag}>{currency.flag}</Text>
+              )}
               <View style={styles.currencyDetails}>
                 <Text style={styles.currencyCode}>
                   {currency.code}
-                  <Text style={styles.currencyName}>{currency.symbol}</Text>
+                  {settings.showSymbol && (
+                    <Text style={styles.currencyName}>&nbsp;{currency.symbol}</Text>
+                  )}
                 </Text>
-                {/* {settings.showSymbol && (
-                  <Text style={styles.currencyName}>
-                    {currency.name}
-                  </Text>
-                )} */}
               </View>
             </View>
 
@@ -200,6 +220,7 @@ const HomeScreen = ({ navigation }) => {
                 styles.amountInput,
                 isActive && styles.amountInputActive
               ]}
+              showSoftInputOnFocus={false}
               value={amounts[currencyCode]?.toString() || ''}
               onChangeText={(value) => handleAmountChange(currencyCode, value)}
               keyboardType="decimal-pad"
@@ -237,6 +258,85 @@ const HomeScreen = ({ navigation }) => {
 
     // 更新顯示值並轉換所有貨幣
     handleAmountChange(activeInput, displayValue);
+  };
+
+  // 計算機 - 小數點
+  const handleDecimal = () => {
+    if (!activeInput) return;
+    
+    let newCurrentInput = calcCurrentInput;
+    if (calcNewNumber) {
+      newCurrentInput = '0.';
+      setCalcNewNumber(false);
+    } else if (!newCurrentInput.includes('.')) {
+      newCurrentInput += '.';
+    } else {
+      return;
+    }
+
+    setCalcCurrentInput(newCurrentInput);
+
+    let displayValue = newCurrentInput;
+    if (calcPrevValue !== null && calcOperator) {
+      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
+      displayValue = String(result);
+    }
+    handleAmountChange(activeInput, displayValue);
+  };
+
+  // 計算機 - 00按鈕
+  const handleDoubleZero = () => {
+    if (!activeInput) return;
+    
+    let newCurrentInput;
+    if (calcNewNumber) {
+      newCurrentInput = '0';
+      setCalcNewNumber(false);
+    } else {
+      newCurrentInput = calcCurrentInput === '0' ? '0' : calcCurrentInput + '00';
+    }
+
+    setCalcCurrentInput(newCurrentInput);
+
+    let displayValue = newCurrentInput;
+    if (calcPrevValue !== null && calcOperator) {
+      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
+      displayValue = String(result);
+    }
+    handleAmountChange(activeInput, displayValue);
+  };
+
+  // 計算機 - 百分比
+  const handlePercent = () => {
+    if (!activeInput) return;
+    
+    const currentValue = parseFloat(calcCurrentInput) || 0;
+    const percentValue = currentValue / 100;
+    const strValue = String(percentValue);
+    
+    setCalcCurrentInput(strValue);
+    setCalcNewNumber(true); // 完成一次轉換後，下次輸入視為新數字
+
+    let displayValue = strValue;
+    if (calcPrevValue !== null && calcOperator) {
+       // 如果是在運算中按下%，通常是針對當前輸入取百分比，然後再參與運算
+       // 例如 100 + 10 % -> 100 + 0.1 -> 100.1 (有些計算機邏輯不同，這裡是簡單除以100)
+       const result = performCalculation(calcPrevValue, percentValue, calcOperator);
+       displayValue = String(result);
+    }
+    handleAmountChange(activeInput, displayValue);
+  };
+
+  // 計算機 - 等號 (結束運算)
+  const handleEqual = () => {
+    if (!activeInput) return;
+    
+    // 這裡不做額外運算，因為輸入時已經即時運算了
+    // 主要是清除運算符狀態，讓下次輸入變成全新的開始，但保留當前值
+    setCalcPrevValue(null);
+    setCalcOperator(null);
+    setCalcNewNumber(true);
+    setCalcCurrentInput('0');
   };
 
   // 計算機 - 運算符按鈕
@@ -316,7 +416,7 @@ const HomeScreen = ({ navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>載入匯率資料...</Text>
+        <Text style={styles.loadingText}>{t('loading')}</Text>
       </View>
     );
   }
@@ -326,7 +426,7 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.container}>
         {/* 標題列 */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>tCurrency</Text>
+          <Text style={styles.headerTitle}>極台匯率</Text>
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => navigation.navigate('Settings')}
@@ -335,12 +435,20 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* 更新時間 */}
-        {settings.showExchangeSource && (
-          <View style={styles.updateInfo}>
+        {/* 更新時間與新增貨幣按鈕 */}
+        <View style={styles.updateInfo}>
+          {settings.showExchangeSource ? (
             <Text style={styles.updateText}>🔄 {formatUpdateTime()}</Text>
-          </View>
-        )}
+          ) : <View />}
+          
+          {selectedCurrencies.length < 6 && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('CurrencySelection')}
+            >
+              <Text style={styles.headerAddButtonText}>{t('addCurrency')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* 貨幣列表容器 */}
         <ScrollView
@@ -353,24 +461,32 @@ const HomeScreen = ({ navigation }) => {
           }
         >
           {selectedCurrencies.map((currencyCode) => renderCurrencyItem(currencyCode))}
-
-          {/* 新增貨幣按鈕 */}
-          {selectedCurrencies.length < 6 && (
-            <TouchableOpacity
-              style={styles.addCurrencyButton}
-              onPress={() => navigation.navigate('CurrencySelection')}
-            >
-              <Text style={styles.addCurrencyIcon}>+</Text>
-              <Text style={styles.addCurrencyText}>新增貨幣</Text>
-            </TouchableOpacity>
-          )}
         </ScrollView>
 
-      {/* 計算機 - 浮動在底部 */}
-      <View style={styles.calculator}>
+      {/* 計算機 - 浮動在底部 - 4x5 佈局 */}
+      <BlurView intensity={80} tint="dark" style={styles.calculator}>
         {/* 按鈕區域 */}
         <View style={styles.calcButtons}>
-          {/* 第一行：7 8 9 ÷ */}
+          {/* 第一行：C ⌫ % ÷ */}
+          <View style={styles.calcRow}>
+            <TouchableOpacity style={[styles.calcButton, styles.calcClearButton]} onPress={handleClear}>
+              <Text style={[styles.calcButtonText, styles.calcClearText]}>C</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.calcButton, styles.calcBackspaceButton]} onPress={handleBackspace}>
+              <Text style={[styles.calcButtonText, styles.calcBackspaceText]}>⌫</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calcButton} onPress={handlePercent}>
+              <Text style={styles.calcButtonText}>%</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '/' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('/')}
+            >
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '/' && styles.calcButtonTextActive]}>÷</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 第二行：7 8 9 × */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('7')}>
               <Text style={styles.calcButtonText}>7</Text>
@@ -382,14 +498,14 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.calcButtonText}>9</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '/' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('/')}
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === 'x' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('x')}
             >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '/' && styles.calcButtonTextActive]}>÷</Text>
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === 'x' && styles.calcButtonTextActive]}>×</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 第二行：4 5 6 × */}
+          {/* 第三行：4 5 6 − */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('4')}>
               <Text style={styles.calcButtonText}>4</Text>
@@ -401,14 +517,14 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.calcButtonText}>6</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === 'x' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('x')}
+              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '-' && styles.calcButtonActive]}
+              onPress={() => handleOperatorPress('-')}
             >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === 'x' && styles.calcButtonTextActive]}>×</Text>
+              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '-' && styles.calcButtonTextActive]}>−</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 第三行：1 2 3 - */}
+          {/* 第四行：1 2 3 + */}
           <View style={styles.calcRow}>
             <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('1')}>
               <Text style={styles.calcButtonText}>1</Text>
@@ -420,29 +536,29 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.calcButtonText}>3</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '-' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('-')}
-            >
-              <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '-' && styles.calcButtonTextActive]}>−</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 第四行：C 0 ⌫ + */}
-          <View style={styles.calcRow}>
-            <TouchableOpacity style={[styles.calcButton, styles.calcClearButton]} onPress={handleClear}>
-              <Text style={[styles.calcButtonText, styles.calcClearText]}>C</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('0')}>
-              <Text style={styles.calcButtonText}>0</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.calcButton, styles.calcBackspaceButton]} onPress={handleBackspace}>
-              <Text style={[styles.calcButtonText, styles.calcBackspaceText]}>⌫</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
               style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '+' && styles.calcButtonActive]}
               onPress={() => handleOperatorPress('+')}
             >
               <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '+' && styles.calcButtonTextActive]}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 第五行：0 00 . = */}
+          <View style={styles.calcRow}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('0')}>
+              <Text style={styles.calcButtonText}>0</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calcButton} onPress={handleDoubleZero}>
+              <Text style={styles.calcButtonText}>00</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.calcButton} onPress={handleDecimal}>
+              <Text style={styles.calcButtonText}>.</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.calcButton, styles.calcEqualButton]}
+              onPress={handleEqual}
+            >
+              <Text style={[styles.calcButtonText, styles.calcEqualText]}>=</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -451,11 +567,11 @@ const HomeScreen = ({ navigation }) => {
         {settings.showExchangeSource && (
           <View style={styles.sourceInfo}>
             <Text style={styles.sourceText}>
-              {settings.exchangeSource === 'SIMPLE' ? 'tCurrency' : '中間價'}
+              {settings.exchangeSource === 'SIMPLE' ? t('exchangeSourceSimple') : t('exchangeSourceMedium')}
             </Text>
           </View>
         )}
-      </View>
+      </BlurView>
       </View>
     </GestureHandlerRootView>
   );
@@ -499,13 +615,23 @@ const styles = StyleSheet.create({
     color: '#000'
   },
   updateInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0'
   },
   updateText: {
     fontSize: 14,
     color: '#666'
+  },
+  headerAddButtonText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600'
   },
   currencyList: {
     flex: 1,
@@ -588,47 +714,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#007AFF'
   },
-  addCurrencyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    marginVertical: 16,
-    marginHorizontal: 20,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
-    borderStyle: 'dashed'
-  },
-  addCurrencyIcon: {
-    fontSize: 28,
-    color: '#007AFF',
-    fontWeight: '600',
-    marginRight: 8
-  },
-  addCurrencyText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '600'
-  },
   calculator: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(63, 81, 181, 0.85)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingBottom: 24,
+    overflow: 'hidden'
   },
   calcButtons: {
     // Container for all calculator button rows
@@ -639,56 +733,67 @@ const styles = StyleSheet.create({
   },
   calcButton: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
-    paddingVertical: 18,
-    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 56,
-    marginHorizontal: 4
+    minHeight: 46,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)'
   },
   calcButtonText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#000'
+    color: '#FFFFFF'
   },
   calcOperatorButton: {
-    backgroundColor: '#E8F4FF'
+    backgroundColor: 'rgba(0, 122, 255, 0.3)',
+    borderColor: 'rgba(0, 122, 255, 0.4)'
   },
   calcOperatorText: {
-    color: '#007AFF'
+    color: '#FFFFFF'
   },
   calcButtonActive: {
-    backgroundColor: '#007AFF'
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF'
   },
   calcButtonTextActive: {
     color: '#FFFFFF'
   },
   calcClearButton: {
-    backgroundColor: '#FFE8E8'
+    backgroundColor: 'rgba(255, 59, 48, 0.3)',
+    borderColor: 'rgba(255, 59, 48, 0.4)'
   },
   calcClearText: {
-    color: '#FF3B30'
+    color: '#FFFFFF'
   },
   calcBackspaceButton: {
-    backgroundColor: '#FFF4E8'
+    backgroundColor: 'rgba(255, 149, 0, 0.3)',
+    borderColor: 'rgba(255, 149, 0, 0.4)'
   },
   calcBackspaceText: {
-    color: '#FF9500',
-    fontSize: 26
+    color: '#FFFFFF',
+    fontSize: 22
+  },
+  calcEqualButton: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF'
+  },
+  calcEqualText: {
+    color: '#FFFFFF'
   },
   sourceInfo: {
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 20,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: 'transparent',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    marginTop: 8
+    marginTop: 4
   },
   sourceText: {
     fontSize: 12,
-    color: '#999'
+    color: 'rgba(255, 255, 255, 0.6)'
   }
 });
 
