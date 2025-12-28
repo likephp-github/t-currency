@@ -11,9 +11,13 @@ import {
 import { useApp } from '../contexts/AppContext';
 import { CURRENCIES, FAVORITE_CURRENCIES } from '../constants/currencies';
 
-const CurrencySelectionScreen = ({ navigation }) => {
-  const { selectedCurrencies, toggleCurrency } = useApp();
+const CurrencySelectionScreen = ({ navigation, route }) => {
+  const { selectedCurrencies, toggleCurrency, setSelectedCurrencies } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // 獲取替換模式參數
+  const replaceMode = route.params?.replaceMode || false;
+  const replaceCurrency = route.params?.replaceCurrency || null;
 
   // 過濾貨幣
   const filteredCurrencies = useMemo(() => {
@@ -48,17 +52,43 @@ const CurrencySelectionScreen = ({ navigation }) => {
   const alphabetIndex = Object.keys(groupedCurrencies).sort();
 
   const handleCurrencyPress = (currencyCode) => {
-    toggleCurrency(currencyCode);
+    if (replaceMode && replaceCurrency) {
+      // 替換模式：用新貨幣替換舊貨幣
+      const newCurrencies = selectedCurrencies.map(c =>
+        c === replaceCurrency ? currencyCode : c
+      );
+      setSelectedCurrencies(newCurrencies);
+      navigation.goBack();
+    } else {
+      // 正常模式：切換選擇
+      toggleCurrency(currencyCode);
+    }
   };
 
   const renderCurrencyItem = (currency) => {
     const isSelected = selectedCurrencies.includes(currency.code);
-    
+    const isCurrent = replaceMode && currency.code === replaceCurrency;
+
+    // 判斷是否應該 disabled
+    let isDisabled = false;
+    if (replaceMode) {
+      // 替換模式：已選擇的貨幣（除了正在替換的）需要 disabled
+      isDisabled = isSelected && !isCurrent;
+    } else {
+      // 正常模式：當已達到6個上限且該貨幣未被選中時 disabled
+      isDisabled = selectedCurrencies.length >= 6 && !isSelected;
+    }
+
     return (
       <TouchableOpacity
         key={currency.code}
-        style={styles.currencyItem}
+        style={[
+          styles.currencyItem,
+          isCurrent && styles.currentCurrency,
+          isDisabled && styles.disabledCurrency
+        ]}
         onPress={() => handleCurrencyPress(currency.code)}
+        disabled={isDisabled}
       >
         <View style={styles.currencyLeft}>
           <Text style={styles.currencyFlag}>{currency.flag}</Text>
@@ -67,8 +97,11 @@ const CurrencySelectionScreen = ({ navigation }) => {
             <Text style={styles.currencyCode}>{currency.code}</Text>
           </View>
         </View>
-        {isSelected && (
+        {!replaceMode && isSelected && (
           <Text style={styles.checkmark}>✓</Text>
+        )}
+        {isCurrent && (
+          <Text style={styles.currentLabel}>當前</Text>
         )}
       </TouchableOpacity>
     );
@@ -78,7 +111,9 @@ const CurrencySelectionScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* 標題列 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>切換貨幣</Text>
+        <Text style={styles.headerTitle}>
+          {replaceMode ? `替換貨幣 (${replaceCurrency})` : '切換貨幣'}
+        </Text>
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => navigation.goBack()}
@@ -142,6 +177,7 @@ const CurrencySelectionScreen = ({ navigation }) => {
       <View style={styles.footer}>
         <Text style={styles.selectedCount}>
           已選擇 {selectedCurrencies.length} 種貨幣
+          {selectedCurrencies.length >= 6 && ' (已達上限)'}
         </Text>
       </View>
     </SafeAreaView>
@@ -249,6 +285,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#007AFF',
     fontWeight: 'bold'
+  },
+  currentCurrency: {
+    backgroundColor: '#FFF4E8'
+  },
+  currentLabel: {
+    fontSize: 14,
+    color: '#FF9500',
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#FFF4E8',
+    borderRadius: 4
+  },
+  disabledCurrency: {
+    opacity: 0.4,
+    backgroundColor: '#F5F5F5'
   },
   alphabetIndex: {
     width: 24,

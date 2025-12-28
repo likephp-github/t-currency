@@ -91,7 +91,7 @@ const SettingsScreen = ({ navigation }) => {
           <Text style={styles.settingLabel}>換算匯率源</Text>
           <View style={styles.sourceValue}>
             <Text style={styles.sourceText}>
-              「{settings.exchangeSource === 'SIMPLE' ? '極簡匯率' : '中間價'}」
+              「{settings.exchangeSource === 'SIMPLE' ? 'tCurrency' : '中間價'}」
             </Text>
             <Text style={styles.chevron}>›</Text>
           </View>
@@ -123,7 +123,7 @@ const SettingsScreen = ({ navigation }) => {
 
         {/* 底部連結 */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>恢復默認幣種列表</Text>
+          <Text style={styles.footerText}>tCurrency</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

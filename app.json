@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "極簡匯率",
+    "name": "tCurrency",
     "slug": "currency-converter",
     "version": "1.0.0",
     "orientation": "portrait",

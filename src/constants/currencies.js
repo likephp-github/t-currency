@@ -143,6 +143,6 @@ export const DEFAULT_SELECTED_CURRENCIES = ['TWD', 'KRW', 'USD', 'JPY', 'EUR'];
 
 // 匯率 API 來源
 export const EXCHANGE_RATE_SOURCES = {
-  SIMPLE: '極簡匯率',
+  SIMPLE: 'tCurrency',
   MEDIUM: '中間價'
 };

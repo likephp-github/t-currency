@@ -1,4 +1,4 @@
-# 極簡匯率 - Currency Converter
+# tCurrency - Currency Converter
 
 一個簡潔美觀的跨平台匯率換算 APP，使用 React Native (Expo) 開發。
 

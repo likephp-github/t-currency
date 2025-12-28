@@ -115,7 +115,10 @@ export const AppProvider = ({ children }) => {
         return; // 不能移除最後一個
       }
     } else {
-      // 新增
+      // 新增（但最多6個）
+      if (selectedCurrencies.length >= 6) {
+        return; // 已達到最大數量限制
+      }
       newSelected = [...selectedCurrencies, currencyCode];
     }
     saveSelectedCurrencies(newSelected);
