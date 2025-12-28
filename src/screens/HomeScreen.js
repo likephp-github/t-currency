@@ -34,6 +34,7 @@ const HomeScreen = ({ navigation }) => {
   const [calcPrevValue, setCalcPrevValue] = useState(null);
   const [calcOperator, setCalcOperator] = useState(null);
   const [calcNewNumber, setCalcNewNumber] = useState(true);
+  const [calcCurrentInput, setCalcCurrentInput] = useState('0'); // 追蹤當前輸入的數字
 
   // 初始化金額
   useEffect(() => {
@@ -212,33 +213,48 @@ const HomeScreen = ({ navigation }) => {
   const handleNumberPress = (num) => {
     if (!activeInput) return;
 
-    const currentValue = amounts[activeInput]?.toString() || '0';
-
+    // 建立當前輸入的數字
+    let newCurrentInput;
     if (calcNewNumber) {
-      handleAmountChange(activeInput, num);
+      newCurrentInput = num;
       setCalcNewNumber(false);
     } else {
-      const newValue = currentValue === '0' ? num : currentValue + num;
-      handleAmountChange(activeInput, newValue);
+      newCurrentInput = calcCurrentInput === '0' ? num : calcCurrentInput + num;
     }
+
+    // 儲存當前輸入
+    setCalcCurrentInput(newCurrentInput);
+
+    // 如果有待處理的運算，立即計算並顯示結果
+    let displayValue = newCurrentInput;
+    if (calcPrevValue !== null && calcOperator) {
+      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
+      displayValue = String(result);
+    }
+
+    // 更新顯示值並轉換所有貨幣
+    handleAmountChange(activeInput, displayValue);
   };
 
   // 計算機 - 運算符按鈕
   const handleOperatorPress = (operator) => {
     if (!activeInput) return;
 
-    const currentValue = parseFloat(amounts[activeInput]) || 0;
+    const currentValue = parseFloat(calcCurrentInput) || 0;
 
-    if (calcPrevValue === null) {
-      setCalcPrevValue(currentValue);
-    } else if (calcOperator) {
+    // 如果已有待處理的運算，先計算出結果
+    if (calcPrevValue !== null && calcOperator) {
       const result = performCalculation(calcPrevValue, currentValue, calcOperator);
-      handleAmountChange(activeInput, String(result));
       setCalcPrevValue(result);
+      handleAmountChange(activeInput, String(result));
+    } else {
+      // 第一次按運算符，儲存當前值
+      setCalcPrevValue(currentValue);
     }
 
     setCalcOperator(operator);
     setCalcNewNumber(true);
+    setCalcCurrentInput('0'); // 重置當前輸入
   };
 
   // 計算機 - 執行計算
@@ -261,14 +277,25 @@ const HomeScreen = ({ navigation }) => {
   const handleBackspace = () => {
     if (!activeInput) return;
 
-    const currentValue = amounts[activeInput]?.toString() || '0';
-
-    if (currentValue.length > 1) {
-      const newValue = currentValue.slice(0, -1);
-      handleAmountChange(activeInput, newValue);
+    // 刪除最後一個字元
+    let newCurrentInput;
+    if (calcCurrentInput.length > 1) {
+      newCurrentInput = calcCurrentInput.slice(0, -1);
     } else {
-      handleAmountChange(activeInput, '0');
+      newCurrentInput = '0';
     }
+
+    // 儲存新的輸入
+    setCalcCurrentInput(newCurrentInput);
+
+    // 如果有待處理的運算，立即重新計算結果
+    let displayValue = newCurrentInput;
+    if (calcPrevValue !== null && calcOperator) {
+      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
+      displayValue = String(result);
+    }
+
+    handleAmountChange(activeInput, displayValue);
   };
 
   // 計算機 - 清除按鈕
@@ -279,6 +306,7 @@ const HomeScreen = ({ navigation }) => {
     setCalcPrevValue(null);
     setCalcOperator(null);
     setCalcNewNumber(true);
+    setCalcCurrentInput('0');
   };
 
   if (loading && !exchangeRates) {
@@ -315,6 +343,8 @@ const HomeScreen = ({ navigation }) => {
         <ScrollView
           style={styles.currencyList}
           contentContainerStyle={styles.currencyListContent}
+          scrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -479,7 +509,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF'
   },
   currencyListContent: {
-    paddingBottom: 20
+    paddingBottom: 360
   },
   currencyRow: {
     flexDirection: 'row',

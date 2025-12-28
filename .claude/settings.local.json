@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ulimit:*)",
+      "Bash(brew install:*)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(lsof:*)",
+      "Bash(npx expo start:*)",
+      "Bash(EXPO_NO_METRO_LAZY=1 EXPO_NO_WEB_SETUP=1 npx expo start:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(watchman version:*)",
+      "Bash(brew list:*)"
+    ]
+  }
+}
