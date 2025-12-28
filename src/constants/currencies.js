@@ -146,3 +146,40 @@ export const EXCHANGE_RATE_SOURCES = {
   SIMPLE: 'tCurrency',
   MEDIUM: '中間價'
 };
+
+// 虛擬貨幣定義 - 台灣特色匯率
+export const VIRTUAL_CURRENCIES = {
+  CHICKEN_CUTLET: {
+    code: 'CHICKEN',
+    name: '雞排',
+    nameEn: 'Chicken Cutlet',
+    nameJa: 'フライドチキン',
+    nameKo: '치킨',
+    symbol: '🍗',
+    flag: '🍗',
+    price: 85, // TWD
+    settingKey: 'chickenCutletRate'
+  },
+  BUBBLE_TEA: {
+    code: 'BUBBLE',
+    name: '珍珠奶茶',
+    nameEn: 'Bubble Tea',
+    nameJa: 'タピオカティー',
+    nameKo: '버블티',
+    symbol: '🧋',
+    flag: '🧋',
+    price: 55, // TWD
+    settingKey: 'bubbleTeaRate'
+  }
+};
+
+// 獲取虛擬貨幣的本地化名稱
+export const getVirtualCurrencyName = (virtualCurrency, language = 'zh-TW') => {
+  const nameMap = {
+    'zh-TW': virtualCurrency.name,
+    'en': virtualCurrency.nameEn,
+    'ja': virtualCurrency.nameJa,
+    'ko': virtualCurrency.nameKo
+  };
+  return nameMap[language] || virtualCurrency.name;
+};

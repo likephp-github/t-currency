@@ -133,7 +133,7 @@ const MoreSettingsScreen = ({ navigation }) => {
             <Switch
               value={settings.chickenCutletRate || false}
               onValueChange={() => handleToggle('chickenCutletRate')}
-              trackColor={{ false: '#E0E0E0', true: '#34C759' }}
+              trackColor={{ false: '#D1D1D6', true: '#34C759' }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -143,7 +143,7 @@ const MoreSettingsScreen = ({ navigation }) => {
             <Switch
               value={settings.bubbleTeaRate || false}
               onValueChange={() => handleToggle('bubbleTeaRate')}
-              trackColor={{ false: '#E0E0E0', true: '#34C759' }}
+              trackColor={{ false: '#D1D1D6', true: '#34C759' }}
               thumbColor="#FFFFFF"
             />
           </View>

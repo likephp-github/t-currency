@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { BlurView } from 'expo-blur';
 import { useApp } from '../contexts/AppContext';
 import ExchangeRateService from '../services/exchangeRateAPI';
-import { CURRENCIES } from '../constants/currencies';
+import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
 
 const HomeScreen = ({ navigation }) => {
   const {
@@ -51,6 +51,39 @@ const HomeScreen = ({ navigation }) => {
       setActiveInput(firstCurrency);
     }
   }, [selectedCurrencies]);
+
+  // 建立顯示項目陣列（真實貨幣 + 虛擬貨幣）
+  const displayItems = useMemo(() => {
+    const items = [];
+
+    selectedCurrencies.forEach((currencyCode) => {
+      // 加入真實貨幣
+      items.push({
+        type: 'REAL',
+        code: currencyCode
+      });
+
+      // TWD 後面插入虛擬貨幣（不計入 6 個貨幣限制）
+      if (currencyCode === 'TWD') {
+        if (settings.chickenCutletRate) {
+          items.push({
+            type: 'VIRTUAL',
+            code: 'CHICKEN',
+            data: VIRTUAL_CURRENCIES.CHICKEN_CUTLET
+          });
+        }
+        if (settings.bubbleTeaRate) {
+          items.push({
+            type: 'VIRTUAL',
+            code: 'BUBBLE',
+            data: VIRTUAL_CURRENCIES.BUBBLE_TEA
+          });
+        }
+      }
+    });
+
+    return items;
+  }, [selectedCurrencies, settings.chickenCutletRate, settings.bubbleTeaRate]);
 
   // 當某個貨幣金額改變時，重新計算其他貨幣
   const handleAmountChange = (currency, value) => {
@@ -165,8 +198,63 @@ const HomeScreen = ({ navigation }) => {
     );
   };
 
+  // 渲染虛擬貨幣行
+  const renderVirtualCurrencyItem = (item) => {
+    const { data } = item;
+    const virtualCode = item.code;
+
+    // 計算虛擬貨幣數量
+    const calculateVirtualAmount = () => {
+      if (!amounts['TWD']) return '0.00';
+
+      const twdAmount = parseFloat(amounts['TWD']) || 0;
+      if (twdAmount === 0) return '0.00';
+
+      const quantity = twdAmount / data.price;
+      return quantity.toFixed(settings.decimalPlaces);
+    };
+
+    const virtualAmount = calculateVirtualAmount();
+    const virtualName = getVirtualCurrencyName(data, settings.language);
+
+    return (
+      <View
+        key={virtualCode}
+        style={[
+          styles.currencyRow,
+          styles.virtualCurrencyRow
+        ]}
+      >
+        <View style={styles.currencyInfo}>
+          <Text style={styles.currencyFlag}>{data.flag}</Text>
+          <View style={styles.currencyDetails}>
+            <Text style={styles.currencyCode}>
+              {virtualName}
+              {settings.showSymbol && (
+                <Text style={styles.currencyName}>&nbsp;{data.symbol}</Text>
+              )}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.virtualAmountContainer}>
+          <Text style={styles.virtualAmountText}>
+            {virtualAmount}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   // 渲染每個貨幣項目
-  const renderCurrencyItem = (currencyCode) => {
+  const renderCurrencyItem = (item) => {
+    // 如果是虛擬貨幣，使用專用渲染函數
+    if (item.type === 'VIRTUAL') {
+      return renderVirtualCurrencyItem(item);
+    }
+
+    // 以下是原有的真實貨幣渲染邏輯
+    const currencyCode = item.code;
     const currency = getCurrencyInfo(currencyCode);
     const isActive = activeInput === currencyCode;
 
@@ -464,7 +552,7 @@ const HomeScreen = ({ navigation }) => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {selectedCurrencies.map((currencyCode) => renderCurrencyItem(currencyCode))}
+          {displayItems.map((item) => renderCurrencyItem(item))}
         </ScrollView>
 
       {/* 計算機 - 浮動在底部 - 4x5 佈局 */}
@@ -798,6 +886,30 @@ const styles = StyleSheet.create({
   sourceText: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.6)'
+  },
+  virtualCurrencyRow: {
+    backgroundColor: '#FFFBF0', // 淡黃色背景
+    borderLeftWidth: 3,
+    borderLeftColor: '#FFD700' // 金色左邊框
+  },
+  virtualCurrencyPrice: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2
+  },
+  virtualAmountContainer: {
+    backgroundColor: '#FFF8E1',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'flex-end'
+  },
+  virtualAmountText: {
+    fontSize: 20,
+    fontWeight: '500',
+    color: '#F57C00', // 橘色文字
+    textAlign: 'right'
   }
 });
 
