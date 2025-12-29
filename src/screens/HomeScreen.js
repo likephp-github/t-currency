@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   RefreshControl,
   ScrollView,
   Image,
-  Platform
+  Platform,
+  Animated
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -33,6 +34,7 @@ const HomeScreen = ({ navigation }) => {
   const [amounts, setAmounts] = useState({});
   const [activeInput, setActiveInput] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [inputKey, setInputKey] = useState(0); // 用於強制 TextInput 重新掛載
 
   // 計算機狀態
   const [calcPrevValue, setCalcPrevValue] = useState(null);
@@ -40,16 +42,18 @@ const HomeScreen = ({ navigation }) => {
   const [calcNewNumber, setCalcNewNumber] = useState(true);
   const [calcCurrentInput, setCalcCurrentInput] = useState('0'); // 追蹤當前輸入的數字
 
+  // 防止焦點切換循環的標記
+  const isProcessingFocus = useRef(false);
+
   // 初始化金額
   useEffect(() => {
     if (selectedCurrencies.length > 0) {
       const initialAmounts = {};
-      const firstCurrency = selectedCurrencies[0];
       selectedCurrencies.forEach(currency => {
-        initialAmounts[currency] = currency === firstCurrency ? settings.defaultAmount : 0;
+        initialAmounts[currency] = ''; // 所有貨幣初始值為空
       });
       setAmounts(initialAmounts);
-      setActiveInput(firstCurrency);
+      setActiveInput(selectedCurrencies[0]); // 設定第一個貨幣為焦點
     }
   }, [selectedCurrencies]);
 
@@ -86,13 +90,46 @@ const HomeScreen = ({ navigation }) => {
     return items;
   }, [selectedCurrencies, settings.chickenCutletRate, settings.bubbleTeaRate]);
 
+  // 處理輸入框獲得焦點（切換輸入框）
+  const handleInputFocus = (currency) => {
+    // 防止重複觸發（Android 無限循環問題）
+    if (isProcessingFocus.current) {
+      return;
+    }
+
+    // 如果切換到不同的輸入框，清空所有值
+    if (activeInput !== currency) {
+      isProcessingFocus.current = true;
+
+      // 清空所有貨幣金額
+      const clearedAmounts = {};
+      selectedCurrencies.forEach(c => {
+        clearedAmounts[c] = '';
+      });
+      setAmounts(clearedAmounts);
+      setActiveInput(currency);
+      setInputKey(prev => prev + 1); // 強制 TextInput 重新掛載（iOS 值清除問題）
+
+      // 重置計算機狀態（關鍵！防止舊值被保留）
+      setCalcCurrentInput('0');
+      setCalcNewNumber(true);
+      setCalcPrevValue(null);
+      setCalcOperator(null);
+
+      // 重置處理標記
+      setTimeout(() => {
+        isProcessingFocus.current = false;
+      }, 100);
+    }
+  };
+
   // 當某個貨幣金額改變時，重新計算其他貨幣
   const handleAmountChange = (currency, value) => {
     if (!exchangeRates) return;
 
     const numValue = parseFloat(value) || 0;
     setActiveInput(currency);
-    
+
     const newAmounts = { ...amounts };
     newAmounts[currency] = value;
 
@@ -309,17 +346,18 @@ const HomeScreen = ({ navigation }) => {
             </View>
 
             <TextInput
+              key={`${currencyCode}-${inputKey}`}
               style={[
                 styles.amountInput,
                 isActive && styles.amountInputActive
               ]}
               showSoftInputOnFocus={false}
               value={amounts[currencyCode]?.toString() || ''}
+              onFocus={() => handleInputFocus(currencyCode)}
               onChangeText={(value) => handleAmountChange(currencyCode, value)}
               keyboardType="decimal-pad"
               placeholder="0"
               placeholderTextColor="#999"
-              onFocus={() => setActiveInput(currencyCode)}
             />
           </View>
         </Swipeable>
