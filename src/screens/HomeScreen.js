@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
-  Image
+  Image,
+  Platform
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
@@ -559,7 +560,11 @@ const HomeScreen = ({ navigation }) => {
         </ScrollView>
 
       {/* 計算機 - 浮動在底部 - 5x4 佈局 */}
-      <BlurView intensity={80} tint="dark" style={styles.calculator}>
+      <BlurView intensity={Platform.OS === 'android' ? 100 : 80} tint="dark" style={styles.calculator}>
+        {/* Android 專用不透明背景 */}
+        {Platform.OS === 'android' && (
+          <View style={styles.calcAndroidBackground} />
+        )}
         {/* 按鈕區域 */}
         <View style={styles.calcButtons}>
           {/* 第一行：C 0 00 + × */}
@@ -814,6 +819,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingBottom: 24,
     overflow: 'hidden'
+  },
+  calcAndroidBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)', // 不透明黑色背景
+    zIndex: -1
   },
   calcButtons: {
     // Container for all calculator button rows
