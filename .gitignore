@@ -60,3 +60,6 @@ web-build/
 *.swo
 *~
 .tmp
+
+# Claude Code
+.claude/
