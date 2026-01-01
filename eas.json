@@ -12,10 +12,19 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "buildConfiguration": "Release"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "mat@hummingfood.com",
+        "ascAppId": "6757274482",
+        "appleTeamId": "W73S38FF77"
+      }
+    }
   }
 }

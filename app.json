@@ -16,9 +16,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hummingfood.tcurrency",
+      "bundleIdentifier": "tw.com.hummingfood.tcurrency",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "NSPhotoLibraryUsageDescription": "此應用程式不使用相簿",
+        "NSCameraUsageDescription": "此應用程式不使用相機"
       }
     },
     "android": {
@@ -26,7 +30,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.hummingfood.tcurrency"
+      "package": "tw.com.hummingfood.tcurrency"
     },
     "web": {
       "favicon": "./assets/favicon.png"
