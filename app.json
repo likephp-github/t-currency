@@ -15,8 +15,9 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "tw.com.hummingfood.tcurrency",
+      "buildNumber": "2",
       "config": {
         "usesNonExemptEncryption": false
       },
