@@ -132,6 +132,13 @@ export const CURRENCIES = [
     symbol: '₹',
     flag: '🇮🇳',
     country: '印度'
+  },
+  {
+    code: 'AED',
+    name: '阿聯酋迪拉姆',
+    symbol: 'د.إ',
+    flag: '🇦🇪',
+    country: '阿拉伯聯合大公國'
   }
 ];
 

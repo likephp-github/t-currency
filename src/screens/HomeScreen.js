@@ -19,6 +19,31 @@ import { useApp } from '../contexts/AppContext';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
 
+// 千位數格式化（僅用於顯示）
+const formatWithCommas = (value) => {
+  if (!value || value === '') return '';
+  // 先移除既有逗號，避免重複格式化
+  const str = value.toString().replace(/,/g, '');
+  const isNegative = str.startsWith('-');
+  const absStr = isNegative ? str.slice(1) : str;
+  const parts = absStr.split('.');
+
+  // 手動從右到左每三位加逗號
+  const intPart = parts[0];
+  let formatted = '';
+  let count = 0;
+  for (let i = intPart.length - 1; i >= 0; i--) {
+    if (count > 0 && count % 3 === 0) {
+      formatted = ',' + formatted;
+    }
+    formatted = intPart[i] + formatted;
+    count++;
+  }
+  parts[0] = formatted;
+
+  return (isNegative ? '-' : '') + parts.join('.');
+};
+
 const HomeScreen = ({ navigation }) => {
   const {
     selectedCurrencies,
@@ -127,11 +152,13 @@ const HomeScreen = ({ navigation }) => {
   const handleAmountChange = (currency, value) => {
     if (!exchangeRates) return;
 
-    const numValue = parseFloat(value) || 0;
+    // 移除逗號，確保內部值為純數字
+    const cleanValue = value.replace(/,/g, '');
+    const numValue = parseFloat(cleanValue) || 0;
     setActiveInput(currency);
 
     const newAmounts = { ...amounts };
-    newAmounts[currency] = value;
+    newAmounts[currency] = cleanValue;
 
     // 計算其他貨幣的金額
     selectedCurrencies.forEach(targetCurrency => {
@@ -277,7 +304,7 @@ const HomeScreen = ({ navigation }) => {
 
         <View style={styles.virtualAmountContainer}>
           <Text style={styles.virtualAmountText}>
-            {virtualAmount}
+            {formatWithCommas(virtualAmount)}
           </Text>
         </View>
       </View>
@@ -352,7 +379,7 @@ const HomeScreen = ({ navigation }) => {
                 isActive && styles.amountInputActive
               ]}
               showSoftInputOnFocus={false}
-              value={amounts[currencyCode]?.toString() || ''}
+              value={formatWithCommas(amounts[currencyCode]?.toString() || '')}
               onFocus={() => handleInputFocus(currencyCode)}
               onChangeText={(value) => handleAmountChange(currencyCode, value)}
               keyboardType="decimal-pad"
