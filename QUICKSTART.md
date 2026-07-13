@@ -42,31 +42,6 @@ npm run ios
 npm run android
 ```
 
-## 步驟 4: 設定 Supabase（可選）
-
-如果你想使用雲端同步功能：
-
-1. 前往 [Supabase](https://supabase.com) 建立免費帳號
-2. 建立新專案
-3. 在 SQL Editor 中執行：
-
-```sql
-CREATE TABLE user_preferences (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id TEXT NOT NULL UNIQUE,
-  preferences JSONB,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
-
-4. 複製專案的 URL 和 anon key
-5. 在 `src/services/supabase.js` 中填入：
-
-```javascript
-const SUPABASE_URL = 'your_supabase_url_here';
-const SUPABASE_ANON_KEY = 'your_supabase_anon_key_here';
-```
-
 ## 常見問題
 
 ### Q: npm install 失敗？

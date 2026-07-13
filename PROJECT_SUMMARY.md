@@ -21,8 +21,7 @@ CurrencyConverter/
 │   └── SettingsScreen.js           # 設定頁面 ✅
 │
 ├── 🔧 服務層 (src/services/)
-│   ├── exchangeRateAPI.js          # 匯率 API 服務 ✅
-│   └── supabase.js                 # Supabase 整合 ✅
+│   └── exchangeRateAPI.js          # 匯率 API 服務 ✅
 │
 ├── 🗂️ 資料層 (src/constants/)
 │   └── currencies.js               # 貨幣資料定義 ✅
@@ -64,7 +63,6 @@ CurrencyConverter/
 
 ### 4. 核心功能
 - ✅ 匯率 API 整合（帶快取機制）
-- ✅ Supabase 資料庫整合
 - ✅ AsyncStorage 本地儲存
 - ✅ React Navigation 導航
 - ✅ Context API 狀態管理
@@ -101,12 +99,6 @@ claude
 - "實作離線模式"
 - "修復某個 bug"
 
-### 步驟 3: 設定 Supabase（可選）
-
-1. 前往 https://supabase.com 建立專案
-2. 建立資料表（SQL 指令在 QUICKSTART.md）
-3. 更新 `src/services/supabase.js` 的 API 金鑰
-
 ## 🎯 功能特點
 
 ### 已完成 ✅
@@ -131,7 +123,6 @@ claude
 - **導航**: React Navigation 6
 - **狀態**: Context API + Hooks
 - **儲存**: AsyncStorage
-- **後端**: Supabase
 - **API**: ExchangeRate-API
 
 ## 💡 提示
@@ -139,7 +130,6 @@ claude
 1. **首次執行**: 執行 `npm install` 可能需要幾分鐘
 2. **模擬器**: 建議使用實體手機 + Expo Go APP 測試
 3. **API**: 使用免費 API，無需申請金鑰
-4. **Supabase**: 非必需，可先不設定
 
 ## 🆘 遇到問題？
 

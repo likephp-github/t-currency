@@ -10,7 +10,7 @@
 - ✅ 貨幣搜尋功能
 - ✅ 匯率自動更新（帶快取機制）
 - ✅ 可調整小數點位數
-- ✅ 設定同步（Supabase）
+- ✅ 設定本地儲存（AsyncStorage）
 - ✅ iOS/Android 通用
 
 ## 🚀 快速開始
@@ -20,22 +20,6 @@
 ```bash
 npm install
 ```
-
-### 設定 Supabase（可選）
-
-1. 前往 [Supabase](https://supabase.com) 建立專案
-2. 建立 `user_preferences` 資料表：
-
-```sql
-CREATE TABLE user_preferences (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id TEXT NOT NULL UNIQUE,
-  preferences JSONB,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
-
-3. 在 `src/services/supabase.js` 中填入你的 Supabase URL 和 API Key
 
 ### 執行專案
 
@@ -62,40 +46,41 @@ CurrencyConverter/
 ├── package.json                    # 專案依賴
 ├── babel.config.js                 # Babel 配置
 ├── src/
-│   ├── components/                 # 可重用元件
 │   ├── contexts/
 │   │   └── AppContext.js          # 全域狀態管理
+│   ├── hooks/
+│   │   └── useCalculator.js       # 計算機引擎（pure reducer）
 │   ├── screens/
 │   │   ├── HomeScreen.js          # 主換算頁面
 │   │   ├── CurrencySelectionScreen.js  # 貨幣選擇頁面
-│   │   └── SettingsScreen.js      # 設定頁面
+│   │   ├── SettingsScreen.js      # 設定頁面
+│   │   └── MoreSettingsScreen.js  # 更多設定（國旗、虛擬貨幣）
 │   ├── services/
-│   │   ├── exchangeRateAPI.js     # 匯率 API 服務
-│   │   └── supabase.js            # Supabase 服務
+│   │   └── exchangeRateAPI.js     # 匯率 API 服務
 │   ├── constants/
 │   │   └── currencies.js          # 貨幣資料
-│   └── utils/                      # 工具函數
+│   └── i18n/
+│       └── translations.js        # 多語言字串
 └── assets/                         # 圖片資源
 ```
 
 ## 🛠️ 技術棧
 
-- **框架**: React Native (Expo ~50.0.0)
+- **框架**: React Native (Expo ~54.0.0)
 - **導航**: React Navigation 6
 - **狀態管理**: React Context API + Hooks
 - **本地儲存**: AsyncStorage
-- **後端**: Supabase
 - **匯率 API**: ExchangeRate-API (免費)
+- **測試**: Jest (jest-expo)
 
 ## 📦 主要依賴
 
 ```json
 {
-  "expo": "~50.0.0",
-  "react-native": "0.73.0",
+  "expo": "~54.0.0",
+  "react-native": "0.81.5",
   "@react-navigation/native": "^6.1.9",
-  "@supabase/supabase-js": "^2.39.0",
-  "@react-native-async-storage/async-storage": "1.21.0",
+  "@react-native-async-storage/async-storage": "2.2.0",
   "axios": "^1.6.2"
 }
 ```
@@ -149,7 +134,7 @@ const EXCHANGE_API_BASE = 'https://api.exchangerate-api.com/v4/latest';
 
 - [ ] 歷史匯率查詢
 - [ ] 匯率走勢圖表
-- [ ] 多語言支援
+- [x] 多語言支援（zh-TW / en / ja / ko）
 - [ ] 深色模式
 - [ ] 匯率警報功能
 - [ ] 離線模式優化

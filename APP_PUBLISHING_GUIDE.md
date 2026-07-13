@@ -455,7 +455,7 @@ eas build --platform all --profile production
 
 **A:** 你的匯率 APP：
 - ✅ 使用外部 API（免費）
-- ✅ Supabase 免費方案
+- ✅ 設定存在裝置本地（AsyncStorage）
 - ❌ 不需要自己架設伺服器
 
 ---
