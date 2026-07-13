@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { BlurView } from 'expo-blur';
 import { useApp } from '../contexts/AppContext';
+import { useCalculator } from '../hooks/useCalculator';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
 
@@ -61,11 +62,8 @@ const HomeScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [inputKey, setInputKey] = useState(0); // 用於強制 TextInput 重新掛載
 
-  // 計算機狀態
-  const [calcPrevValue, setCalcPrevValue] = useState(null);
-  const [calcOperator, setCalcOperator] = useState(null);
-  const [calcNewNumber, setCalcNewNumber] = useState(true);
-  const [calcCurrentInput, setCalcCurrentInput] = useState('0'); // 追蹤當前輸入的數字
+  // 計算機引擎(pure reducer,見 src/hooks/useCalculator.js)
+  const { press: calcPress, reset: resetCalculator, operator: calcOperator } = useCalculator();
 
   // 防止焦點切換循環的標記
   const isProcessingFocus = useRef(false);
@@ -136,10 +134,7 @@ const HomeScreen = ({ navigation }) => {
       setInputKey(prev => prev + 1); // 強制 TextInput 重新掛載（iOS 值清除問題）
 
       // 重置計算機狀態（關鍵！防止舊值被保留）
-      setCalcCurrentInput('0');
-      setCalcNewNumber(true);
-      setCalcPrevValue(null);
-      setCalcOperator(null);
+      resetCalculator();
 
       // 重置處理標記
       setTimeout(() => {
@@ -391,183 +386,14 @@ const HomeScreen = ({ navigation }) => {
     );
   };
 
-  // 計算機 - 數字按鈕
-  const handleNumberPress = (num) => {
+  // 計算機按鍵 → 引擎 → 顯示字串進換算流程
+  const onCalcKey = (key) => {
     if (!activeInput) return;
 
-    // 建立當前輸入的數字
-    let newCurrentInput;
-    if (calcNewNumber) {
-      newCurrentInput = num;
-      setCalcNewNumber(false);
-    } else {
-      newCurrentInput = calcCurrentInput === '0' ? num : calcCurrentInput + num;
+    const display = calcPress(key);
+    if (display !== null) {
+      handleAmountChange(activeInput, display);
     }
-
-    // 儲存當前輸入
-    setCalcCurrentInput(newCurrentInput);
-
-    // 如果有待處理的運算，立即計算並顯示結果
-    let displayValue = newCurrentInput;
-    if (calcPrevValue !== null && calcOperator) {
-      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
-      displayValue = String(result);
-    }
-
-    // 更新顯示值並轉換所有貨幣
-    handleAmountChange(activeInput, displayValue);
-  };
-
-  // 計算機 - 小數點
-  const handleDecimal = () => {
-    if (!activeInput) return;
-    
-    let newCurrentInput = calcCurrentInput;
-    if (calcNewNumber) {
-      newCurrentInput = '0.';
-      setCalcNewNumber(false);
-    } else if (!newCurrentInput.includes('.')) {
-      newCurrentInput += '.';
-    } else {
-      return;
-    }
-
-    setCalcCurrentInput(newCurrentInput);
-
-    let displayValue = newCurrentInput;
-    if (calcPrevValue !== null && calcOperator) {
-      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
-      displayValue = String(result);
-    }
-    handleAmountChange(activeInput, displayValue);
-  };
-
-  // 計算機 - 00按鈕
-  const handleDoubleZero = () => {
-    if (!activeInput) return;
-    
-    let newCurrentInput;
-    if (calcNewNumber) {
-      newCurrentInput = '0';
-      setCalcNewNumber(false);
-    } else {
-      newCurrentInput = calcCurrentInput === '0' ? '0' : calcCurrentInput + '00';
-    }
-
-    setCalcCurrentInput(newCurrentInput);
-
-    let displayValue = newCurrentInput;
-    if (calcPrevValue !== null && calcOperator) {
-      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
-      displayValue = String(result);
-    }
-    handleAmountChange(activeInput, displayValue);
-  };
-
-  // 計算機 - 百分比
-  const handlePercent = () => {
-    if (!activeInput) return;
-    
-    const currentValue = parseFloat(calcCurrentInput) || 0;
-    const percentValue = currentValue / 100;
-    const strValue = String(percentValue);
-    
-    setCalcCurrentInput(strValue);
-    setCalcNewNumber(true); // 完成一次轉換後，下次輸入視為新數字
-
-    let displayValue = strValue;
-    if (calcPrevValue !== null && calcOperator) {
-       // 如果是在運算中按下%，通常是針對當前輸入取百分比，然後再參與運算
-       // 例如 100 + 10 % -> 100 + 0.1 -> 100.1 (有些計算機邏輯不同，這裡是簡單除以100)
-       const result = performCalculation(calcPrevValue, percentValue, calcOperator);
-       displayValue = String(result);
-    }
-    handleAmountChange(activeInput, displayValue);
-  };
-
-  // 計算機 - 等號 (結束運算)
-  const handleEqual = () => {
-    if (!activeInput) return;
-    
-    // 這裡不做額外運算，因為輸入時已經即時運算了
-    // 主要是清除運算符狀態，讓下次輸入變成全新的開始，但保留當前值
-    setCalcPrevValue(null);
-    setCalcOperator(null);
-    setCalcNewNumber(true);
-    setCalcCurrentInput('0');
-  };
-
-  // 計算機 - 運算符按鈕
-  const handleOperatorPress = (operator) => {
-    if (!activeInput) return;
-
-    const currentValue = parseFloat(calcCurrentInput) || 0;
-
-    // 如果已有待處理的運算，先計算出結果
-    if (calcPrevValue !== null && calcOperator) {
-      const result = performCalculation(calcPrevValue, currentValue, calcOperator);
-      setCalcPrevValue(result);
-      handleAmountChange(activeInput, String(result));
-    } else {
-      // 第一次按運算符，儲存當前值
-      setCalcPrevValue(currentValue);
-    }
-
-    setCalcOperator(operator);
-    setCalcNewNumber(true);
-    setCalcCurrentInput('0'); // 重置當前輸入
-  };
-
-  // 計算機 - 執行計算
-  const performCalculation = (prev, current, operator) => {
-    switch (operator) {
-      case '+':
-        return prev + current;
-      case '-':
-        return prev - current;
-      case 'x':
-        return prev * current;
-      case '/':
-        return current !== 0 ? prev / current : prev;
-      default:
-        return current;
-    }
-  };
-
-  // 計算機 - 倒退按鈕（刪除最後一個字元）
-  const handleBackspace = () => {
-    if (!activeInput) return;
-
-    // 刪除最後一個字元
-    let newCurrentInput;
-    if (calcCurrentInput.length > 1) {
-      newCurrentInput = calcCurrentInput.slice(0, -1);
-    } else {
-      newCurrentInput = '0';
-    }
-
-    // 儲存新的輸入
-    setCalcCurrentInput(newCurrentInput);
-
-    // 如果有待處理的運算，立即重新計算結果
-    let displayValue = newCurrentInput;
-    if (calcPrevValue !== null && calcOperator) {
-      const result = performCalculation(calcPrevValue, parseFloat(newCurrentInput), calcOperator);
-      displayValue = String(result);
-    }
-
-    handleAmountChange(activeInput, displayValue);
-  };
-
-  // 計算機 - 清除按鈕
-  const handleClear = () => {
-    if (!activeInput) return;
-
-    handleAmountChange(activeInput, '0');
-    setCalcPrevValue(null);
-    setCalcOperator(null);
-    setCalcNewNumber(true);
-    setCalcCurrentInput('0');
   };
 
   if (loading && !exchangeRates) {
@@ -634,24 +460,24 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.calcButtons}>
           {/* 第一行：C 0 00 + × */}
           <View style={styles.calcRow}>
-            <TouchableOpacity style={[styles.calcButton, styles.calcClearButton]} onPress={handleClear}>
+            <TouchableOpacity style={[styles.calcButton, styles.calcClearButton]} onPress={() => onCalcKey('clear')}>
               <Text style={[styles.calcButtonText, styles.calcClearText]}>C</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('0')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('0')}>
               <Text style={styles.calcButtonText}>0</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={handleDoubleZero}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('00')}>
               <Text style={styles.calcButtonText}>00</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '+' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('+')}
+              onPress={() => onCalcKey('+')}
             >
               <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '+' && styles.calcButtonTextActive]}>+</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.calcButton, styles.calcOperatorButton, calcOperator === 'x' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('x')}
+              onPress={() => onCalcKey('x')}
             >
               <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === 'x' && styles.calcButtonTextActive]}>×</Text>
             </TouchableOpacity>
@@ -659,24 +485,24 @@ const HomeScreen = ({ navigation }) => {
 
           {/* 第二行：7 8 9 − ÷ */}
           <View style={styles.calcRow}>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('7')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('7')}>
               <Text style={styles.calcButtonText}>7</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('8')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('8')}>
               <Text style={styles.calcButtonText}>8</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('9')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('9')}>
               <Text style={styles.calcButtonText}>9</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '-' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('-')}
+              onPress={() => onCalcKey('-')}
             >
               <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '-' && styles.calcButtonTextActive]}>−</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.calcButton, styles.calcOperatorButton, calcOperator === '/' && styles.calcButtonActive]}
-              onPress={() => handleOperatorPress('/')}
+              onPress={() => onCalcKey('/')}
             >
               <Text style={[styles.calcButtonText, styles.calcOperatorText, calcOperator === '/' && styles.calcButtonTextActive]}>÷</Text>
             </TouchableOpacity>
@@ -684,40 +510,40 @@ const HomeScreen = ({ navigation }) => {
 
           {/* 第三行：4 5 6 ⌫ % */}
           <View style={styles.calcRow}>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('4')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('4')}>
               <Text style={styles.calcButtonText}>4</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('5')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('5')}>
               <Text style={styles.calcButtonText}>5</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('6')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('6')}>
               <Text style={styles.calcButtonText}>6</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.calcButton, styles.calcBackspaceButton]} onPress={handleBackspace}>
+            <TouchableOpacity style={[styles.calcButton, styles.calcBackspaceButton]} onPress={() => onCalcKey('back')}>
               <Text style={[styles.calcButtonText, styles.calcBackspaceText]}>⌫</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={handlePercent}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('%')}>
               <Text style={styles.calcButtonText}>%</Text>
             </TouchableOpacity>
           </View>
 
           {/* 第四行：1 2 3 . = */}
           <View style={styles.calcRow}>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('1')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('1')}>
               <Text style={styles.calcButtonText}>1</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('2')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('2')}>
               <Text style={styles.calcButtonText}>2</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={() => handleNumberPress('3')}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('3')}>
               <Text style={styles.calcButtonText}>3</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.calcButton} onPress={handleDecimal}>
+            <TouchableOpacity style={styles.calcButton} onPress={() => onCalcKey('.')}>
               <Text style={styles.calcButtonText}>.</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.calcButton, styles.calcEqualButton]}
-              onPress={handleEqual}
+              onPress={() => onCalcKey('=')}
             >
               <Text style={[styles.calcButtonText, styles.calcEqualText]}>=</Text>
             </TouchableOpacity>

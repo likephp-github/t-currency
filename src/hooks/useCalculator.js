@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 // 計算機引擎 — 從 HomeScreen 抽出的 pure reducer。
 // 語意:即時求值 — 輸入第二運算元時邊打邊顯示運算結果,
@@ -97,19 +97,23 @@ export const reduce = (state, key) => {
   throw new Error(`useCalculator: 未知按鍵 "${key}"`);
 };
 
-// 計算機狀態不參與渲染(結果透過 press 回傳值流向換算),用 ref 即可
+// press 需同步回傳 display(供換算流程),operator 需觸發重渲染(供鍵盤高亮),
+// 因此以 ref 為事實來源、useState 為渲染鏡像
 export const useCalculator = () => {
   const stateRef = useRef(initialState);
+  const [state, setState] = useState(initialState);
 
   const press = (key) => {
     const next = reduce(stateRef.current, key);
     stateRef.current = next;
+    setState(next);
     return next.display;
   };
 
   const reset = () => {
     stateRef.current = initialState;
+    setState(initialState);
   };
 
-  return { press, reset };
+  return { press, reset, operator: state.operator };
 };
