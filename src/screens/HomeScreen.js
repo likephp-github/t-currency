@@ -17,10 +17,10 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { BlurView } from 'expo-blur';
 import { useApp } from '../contexts/AppContext';
 import { useCalculator } from '../hooks/useCalculator';
-import ExchangeRateService from '../services/exchangeRateAPI';
+import { useConversions } from '../hooks/useConversions';
 import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
 import { canAdd, canRemove } from '../policies/currencyListPolicy';
-import { formatAmount, formatUpdateTime } from '../utils/formatting';
+import { formatUpdateTime } from '../utils/formatting';
 
 const HomeScreen = ({ navigation }) => {
   const {
@@ -34,7 +34,6 @@ const HomeScreen = ({ navigation }) => {
     t
   } = useApp();
 
-  const [amounts, setAmounts] = useState({});
   const [activeInput, setActiveInput] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [inputKey, setInputKey] = useState(0); // 用於強制 TextInput 重新掛載
@@ -42,18 +41,20 @@ const HomeScreen = ({ navigation }) => {
   // 計算機引擎(pure reducer,見 src/hooks/useCalculator.js)
   const { press: calcPress, reset: resetCalculator, operator: calcOperator } = useCalculator();
 
+  // 換算引擎(擁有 amounts grid,見 src/hooks/useConversions.js)
+  const { amounts, setAmount, clear: clearAmounts } = useConversions(
+    exchangeRates,
+    selectedCurrencies,
+    settings.decimalPlaces
+  );
+
   // 防止焦點切換循環的標記
   const isProcessingFocus = useRef(false);
 
-  // 初始化金額
+  // 已選貨幣清單改變時,焦點設回第一個貨幣(amounts 由 useConversions 自己重設)
   useEffect(() => {
     if (selectedCurrencies.length > 0) {
-      const initialAmounts = {};
-      selectedCurrencies.forEach(currency => {
-        initialAmounts[currency] = ''; // 所有貨幣初始值為空
-      });
-      setAmounts(initialAmounts);
-      setActiveInput(selectedCurrencies[0]); // 設定第一個貨幣為焦點
+      setActiveInput(selectedCurrencies[0]);
     }
   }, [selectedCurrencies]);
 
@@ -101,12 +102,7 @@ const HomeScreen = ({ navigation }) => {
     if (activeInput !== currency) {
       isProcessingFocus.current = true;
 
-      // 清空所有貨幣金額
-      const clearedAmounts = {};
-      selectedCurrencies.forEach(c => {
-        clearedAmounts[c] = '';
-      });
-      setAmounts(clearedAmounts);
+      clearAmounts();
       setActiveInput(currency);
       setInputKey(prev => prev + 1); // 強制 TextInput 重新掛載（iOS 值清除問題）
 
@@ -120,32 +116,10 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // 當某個貨幣金額改變時，重新計算其他貨幣
+  // 當某個貨幣金額改變時，標記使用中的貨幣、交給換算引擎重新計算
   const handleAmountChange = (currency, value) => {
-    if (!exchangeRates) return;
-
-    // 移除逗號，確保內部值為純數字
-    const cleanValue = value.replace(/,/g, '');
-    const numValue = parseFloat(cleanValue) || 0;
     setActiveInput(currency);
-
-    const newAmounts = { ...amounts };
-    newAmounts[currency] = cleanValue;
-
-    // 計算其他貨幣的金額
-    selectedCurrencies.forEach(targetCurrency => {
-      if (targetCurrency !== currency) {
-        const converted = ExchangeRateService.convertCurrency(
-          numValue,
-          currency,
-          targetCurrency,
-          exchangeRates
-        );
-        newAmounts[targetCurrency] = converted.toFixed(settings.decimalPlaces);
-      }
-    });
-
-    setAmounts(newAmounts);
+    setAmount(currency, value);
   };
 
   // 下拉重新整理
@@ -218,19 +192,6 @@ const HomeScreen = ({ navigation }) => {
   const renderVirtualCurrencyItem = (item) => {
     const { data } = item;
     const virtualCode = item.code;
-
-    // 計算虛擬貨幣數量
-    const calculateVirtualAmount = () => {
-      if (!amounts['TWD']) return '0.00';
-
-      const twdAmount = parseFloat(amounts['TWD']) || 0;
-      if (twdAmount === 0) return '0.00';
-
-      const quantity = twdAmount / data.price;
-      return quantity.toFixed(settings.decimalPlaces);
-    };
-
-    const virtualAmount = calculateVirtualAmount();
     const virtualName = getVirtualCurrencyName(data, settings.language);
 
     return (
@@ -255,7 +216,7 @@ const HomeScreen = ({ navigation }) => {
 
         <View style={styles.virtualAmountContainer}>
           <Text style={styles.virtualAmountText}>
-            {formatAmount(virtualAmount)}
+            {amounts[virtualCode]}
           </Text>
         </View>
       </View>
@@ -330,7 +291,7 @@ const HomeScreen = ({ navigation }) => {
                 isActive && styles.amountInputActive
               ]}
               showSoftInputOnFocus={false}
-              value={formatAmount(amounts[currencyCode]?.toString() || '')}
+              value={amounts[currencyCode] || ''}
               onFocus={() => handleInputFocus(currencyCode)}
               onChangeText={(value) => handleAmountChange(currencyCode, value)}
               keyboardType="decimal-pad"
