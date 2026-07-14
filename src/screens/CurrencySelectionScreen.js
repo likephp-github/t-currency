@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useApp } from '../contexts/AppContext';
 import { CURRENCIES, FAVORITE_CURRENCIES } from '../constants/currencies';
+import { canAdd } from '../policies/currencyListPolicy';
 
 const CurrencySelectionScreen = ({ navigation, route }) => {
   const { selectedCurrencies, toggleCurrency, setSelectedCurrencies, t } = useApp();
@@ -75,8 +76,8 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
       // 替換模式：已選擇的貨幣（除了正在替換的）需要 disabled
       isDisabled = isSelected && !isCurrent;
     } else {
-      // 正常模式：當已達到6個上限且該貨幣未被選中時 disabled
-      isDisabled = selectedCurrencies.length >= 6 && !isSelected;
+      // 正常模式：當已達到上限且該貨幣未被選中時 disabled
+      isDisabled = !canAdd(selectedCurrencies) && !isSelected;
     }
 
     return (
@@ -179,7 +180,7 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
       <View style={styles.footer}>
         <Text style={styles.selectedCount}>
           {t('selectedCount', { count: selectedCurrencies.length })}
-          {selectedCurrencies.length >= 6 && t('limitReached')}
+          {!canAdd(selectedCurrencies) && t('limitReached')}
         </Text>
       </View>
     </SafeAreaView>

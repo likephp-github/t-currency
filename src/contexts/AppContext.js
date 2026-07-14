@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { DEFAULT_SELECTED_CURRENCIES } from '../constants/currencies';
 import { TRANSLATIONS } from '../i18n/translations';
+import { canAdd, canRemove } from '../policies/currencyListPolicy';
 
 const AppContext = createContext();
 
@@ -110,16 +111,13 @@ export const AppProvider = ({ children }) => {
   const toggleCurrency = (currencyCode) => {
     let newSelected;
     if (selectedCurrencies.includes(currencyCode)) {
-      // 移除（但至少保留一個）
-      if (selectedCurrencies.length > 1) {
-        newSelected = selectedCurrencies.filter(c => c !== currencyCode);
-      } else {
-        return; // 不能移除最後一個
+      if (!canRemove(selectedCurrencies, currencyCode)) {
+        return;
       }
+      newSelected = selectedCurrencies.filter(c => c !== currencyCode);
     } else {
-      // 新增（但最多6個）
-      if (selectedCurrencies.length >= 6) {
-        return; // 已達到最大數量限制
+      if (!canAdd(selectedCurrencies)) {
+        return;
       }
       newSelected = [...selectedCurrencies, currencyCode];
     }

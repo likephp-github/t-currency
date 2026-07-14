@@ -19,6 +19,7 @@ import { useApp } from '../contexts/AppContext';
 import { useCalculator } from '../hooks/useCalculator';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
+import { canAdd, canRemove } from '../policies/currencyListPolicy';
 
 // 千位數格式化（僅用於顯示）
 const formatWithCommas = (value) => {
@@ -212,13 +213,7 @@ const HomeScreen = ({ navigation }) => {
 
   // 刪除貨幣
   const deleteCurrency = (currencyCode) => {
-    // 台幣不能刪除
-    if (currencyCode === 'TWD') {
-      return;
-    }
-
-    // 至少要保留一個貨幣
-    if (selectedCurrencies.length <= 1) {
+    if (!canRemove(selectedCurrencies, currencyCode)) {
       return;
     }
 
@@ -425,7 +420,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.updateText}>🔄 {formatUpdateTime()}</Text>
           ) : <View />}
           
-          {selectedCurrencies.length < 6 && (
+          {canAdd(selectedCurrencies) && (
             <TouchableOpacity
               onPress={() => navigation.navigate('CurrencySelection')}
             >
