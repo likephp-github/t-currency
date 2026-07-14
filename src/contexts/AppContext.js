@@ -4,6 +4,11 @@ import ExchangeRateService from '../services/exchangeRateAPI';
 import { DEFAULT_SELECTED_CURRENCIES } from '../constants/currencies';
 import { TRANSLATIONS } from '../i18n/translations';
 import { canAdd, canRemove } from '../policies/currencyListPolicy';
+import {
+  DEFAULT_SETTINGS,
+  loadSettings as loadPersistedSettings,
+  saveSettings as persistSettings
+} from '../settings/settingsStore';
 
 const AppContext = createContext();
 
@@ -23,16 +28,8 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   
-  // 設定項
-  const [settings, setSettings] = useState({
-    showLocalCurrency: false,
-    showSymbol: true,
-    showExchangeSource: true,
-    exchangeSource: 'SIMPLE',
-    defaultAmount: 100,
-    decimalPlaces: 2,
-    language: 'zh-TW'
-  });
+  // 設定項(schema 見 src/settings/settingsStore.js)
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   // 載入設定
   useEffect(() => {
@@ -43,25 +40,14 @@ export const AppProvider = ({ children }) => {
 
   // 載入偏好設定
   const loadSettings = async () => {
-    try {
-      const savedSettings = await AsyncStorage.getItem('app_settings');
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-      }
-    } catch (error) {
-      console.error('載入設定失敗:', error);
-    }
+    setSettings(await loadPersistedSettings());
   };
 
   // 儲存設定
   const saveSettings = async (newSettings) => {
-    try {
-      const updatedSettings = { ...settings, ...newSettings };
-      await AsyncStorage.setItem('app_settings', JSON.stringify(updatedSettings));
-      setSettings(updatedSettings);
-    } catch (error) {
-      console.error('儲存設定失敗:', error);
-    }
+    const updatedSettings = { ...settings, ...newSettings };
+    await persistSettings(updatedSettings);
+    setSettings(updatedSettings);
   };
 
   // 載入選中的貨幣
