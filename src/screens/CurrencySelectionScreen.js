@@ -9,11 +9,11 @@ import {
   SafeAreaView
 } from 'react-native';
 import { useApp } from '../contexts/AppContext';
-import { CURRENCIES, FAVORITE_CURRENCIES } from '../constants/currencies';
+import { CURRENCIES, FAVORITE_CURRENCIES, getCurrencyName } from '../constants/currencies';
 import { canAdd } from '../policies/currencyListPolicy';
 
 const CurrencySelectionScreen = ({ navigation, route }) => {
-  const { selectedCurrencies, toggleCurrency, setSelectedCurrencies, t } = useApp();
+  const { selectedCurrencies, toggleCurrency, setSelectedCurrencies, settings, t } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
 
   // 獲取替換模式參數
@@ -23,14 +23,14 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
   // 過濾貨幣
   const filteredCurrencies = useMemo(() => {
     if (!searchQuery) return CURRENCIES;
-    
+
     const query = searchQuery.toLowerCase();
     return CURRENCIES.filter(currency =>
       currency.code.toLowerCase().includes(query) ||
-      currency.name.toLowerCase().includes(query) ||
+      getCurrencyName(currency, settings.language).toLowerCase().includes(query) ||
       currency.country.toLowerCase().includes(query)
     );
-  }, [searchQuery]);
+  }, [searchQuery, settings.language]);
 
   // 常用貨幣
   const favoriteCurrenciesList = useMemo(() => {
@@ -94,7 +94,7 @@ const CurrencySelectionScreen = ({ navigation, route }) => {
         <View style={styles.currencyLeft}>
           <Text style={styles.currencyFlag}>{currency.flag}</Text>
           <View style={styles.currencyInfo}>
-            <Text style={styles.currencyName}>{currency.name}</Text>
+            <Text style={styles.currencyName}>{getCurrencyName(currency, settings.language)}</Text>
             <Text style={styles.currencyCode}>{currency.code}</Text>
           </View>
         </View>
