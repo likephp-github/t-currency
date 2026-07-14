@@ -62,4 +62,10 @@ web-build/
 .tmp
 
 # Claude Code
-.claude/
+!.claude/
+.claude/*
+!.claude/memory/
+
+# claude-link-memory
+*.incoming-*
+memory.bak-*

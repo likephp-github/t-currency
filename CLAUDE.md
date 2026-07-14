@@ -11,3 +11,7 @@ Uses the default label vocabulary (needs-triage, needs-info, ready-for-agent, re
 ### Domain docs
 
 Single-context layout: CONTEXT.md + docs/adr/ at the repo root. See `docs/agents/domain.md`.
+
+## Project memory
+
+@.claude/memory/MEMORY.md
