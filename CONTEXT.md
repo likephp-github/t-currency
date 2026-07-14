@@ -13,3 +13,7 @@
 ## 虛擬貨幣(Virtual Currency)
 
 `src/constants/currencies.js` 的 `VIRTUAL_CURRENCIES`。以 TWD 計價的趣味換算單位(雞排、珍奶),顯示在 TWD 列之後,不計入貨幣數量上限。
+
+## 貨幣目錄(Currency Catalog)
+
+`src/constants/currencies.js` 的 `CURRENCIES`。使用者可選擇的幣別池(區分於「使用者已選的顯示貨幣」,後者受 #2 的數量上限規則約束)。每筆含 `code`/`name`/`nameEn`/`nameJa`/`nameKo`/`symbol`/`flag`/`country`——多語系顯示名稱比照 `VIRTUAL_CURRENCIES` 的 `nameEn`/`nameJa`/`nameKo` 慣例(2026-07-14 起,選幣畫面統一依 app 語言取名,不再固定顯示 zh-TW)。`country` 欄位僅用於搜尋比對,不多語系化。
