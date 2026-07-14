@@ -21,6 +21,7 @@ import { useConversions } from '../hooks/useConversions';
 import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
 import { canAdd, canRemove } from '../policies/currencyListPolicy';
 import { formatUpdateTime } from '../utils/formatting';
+import { flagSource } from '../utils/flagSource';
 
 const HomeScreen = ({ navigation }) => {
   const {
@@ -261,15 +262,10 @@ const HomeScreen = ({ navigation }) => {
           ]}
         >
             <View style={styles.currencyInfo}>
-              {currency.flag === 'CUSTOM_FLAG_1' ? (
-                <Image 
-                  source={require('../../assets/custom-flag.jpg')} 
-                  style={[styles.currencyFlagImage, { width: 32, height: 32, borderRadius: 16, marginRight: 16 }]} 
-                />
-              ) : currency.flag === 'CUSTOM_FLAG_2' ? (
-                <Image 
-                  source={require('../../assets/formosa-flag.png')} 
-                  style={[styles.currencyFlagImage, { width: 32, height: 32, borderRadius: 16, marginRight: 16 }]} 
+              {flagSource(currency.flag) ? (
+                <Image
+                  source={flagSource(currency.flag)}
+                  style={[styles.currencyFlagImage, { width: 32, height: 32, borderRadius: 16, marginRight: 16 }]}
                 />
               ) : (
                 <Text style={styles.currencyFlag}>{currency.flag}</Text>

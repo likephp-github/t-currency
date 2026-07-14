@@ -12,6 +12,7 @@ import {
   Switch
 } from 'react-native';
 import { useApp } from '../contexts/AppContext';
+import { flagSource } from '../utils/flagSource';
 
 const MoreSettingsScreen = ({ navigation }) => {
   const { t, settings, saveSettings } = useApp();
@@ -57,15 +58,10 @@ const MoreSettingsScreen = ({ navigation }) => {
                   style={styles.modalOption}
                   onPress={() => handleFlagChange(option.value)}
                 >
-                  {option.value === 'CUSTOM_FLAG_1' ? (
-                    <Image 
-                      source={require('../../assets/custom-flag.jpg')} 
-                      style={{ width: 32, height: 32, borderRadius: 16 }} 
-                    />
-                  ) : option.value === 'CUSTOM_FLAG_2' ? (
-                    <Image 
-                      source={require('../../assets/formosa-flag.png')} 
-                      style={{ width: 32, height: 32, borderRadius: 16 }} 
+                  {flagSource(option.value) ? (
+                    <Image
+                      source={flagSource(option.value)}
+                      style={{ width: 32, height: 32, borderRadius: 16 }}
                     />
                   ) : (
                     <Text style={styles.modalOptionIcon}>{option.label}</Text>
@@ -111,14 +107,9 @@ const MoreSettingsScreen = ({ navigation }) => {
           >
             <Text style={styles.settingLabel}>{t('changeFlag')}</Text>
             <View style={styles.valueContainer}>
-              {settings.customNTDFlag === 'CUSTOM_FLAG_1' ? (
+              {flagSource(settings.customNTDFlag) ? (
                 <Image
-                  source={require('../../assets/custom-flag.jpg')}
-                  style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }}
-                />
-              ) : settings.customNTDFlag === 'CUSTOM_FLAG_2' ? (
-                <Image
-                  source={require('../../assets/formosa-flag.png')}
+                  source={flagSource(settings.customNTDFlag)}
                   style={{ width: 24, height: 24, borderRadius: 12, marginRight: 8 }}
                 />
               ) : (
