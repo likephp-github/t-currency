@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback
 } from 'react-native';
 import { useApp } from '../contexts/AppContext';
+import { formatUpdateTime } from '../utils/formatting';
 
 const SettingsScreen = ({ navigation }) => {
   const { settings, saveSettings, lastUpdate, t } = useApp();
@@ -37,14 +38,6 @@ const SettingsScreen = ({ navigation }) => {
   const selectDecimal = (places) => {
     saveSettings({ decimalPlaces: places });
     setDecimalModalVisible(false);
-  };
-
-  const formatUpdateTime = () => {
-    if (!lastUpdate) return t('notUpdated');
-    const hours = lastUpdate.getHours();
-    const minutes = lastUpdate.getMinutes().toString().padStart(2, '0');
-    const timeStr = `${hours}:${minutes}`;
-    return t('updatedToday', { time: timeStr });
   };
 
   const renderLanguageModal = () => (
@@ -181,7 +174,7 @@ const SettingsScreen = ({ navigation }) => {
         {/* 更新資訊 */}
         <View style={styles.updateSection}>
           <Text style={styles.updateIcon}>🔄</Text>
-          <Text style={styles.updateText}>{t('lastUpdate')} {formatUpdateTime()}</Text>
+          <Text style={styles.updateText}>{t('lastUpdate')} {formatUpdateTime(lastUpdate, t)}</Text>
         </View>
 
         {/* 設定項目 */}

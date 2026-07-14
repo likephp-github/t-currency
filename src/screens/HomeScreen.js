@@ -20,31 +20,7 @@ import { useCalculator } from '../hooks/useCalculator';
 import ExchangeRateService from '../services/exchangeRateAPI';
 import { CURRENCIES, VIRTUAL_CURRENCIES, getVirtualCurrencyName } from '../constants/currencies';
 import { canAdd, canRemove } from '../policies/currencyListPolicy';
-
-// 千位數格式化（僅用於顯示）
-const formatWithCommas = (value) => {
-  if (!value || value === '') return '';
-  // 先移除既有逗號，避免重複格式化
-  const str = value.toString().replace(/,/g, '');
-  const isNegative = str.startsWith('-');
-  const absStr = isNegative ? str.slice(1) : str;
-  const parts = absStr.split('.');
-
-  // 手動從右到左每三位加逗號
-  const intPart = parts[0];
-  let formatted = '';
-  let count = 0;
-  for (let i = intPart.length - 1; i >= 0; i--) {
-    if (count > 0 && count % 3 === 0) {
-      formatted = ',' + formatted;
-    }
-    formatted = intPart[i] + formatted;
-    count++;
-  }
-  parts[0] = formatted;
-
-  return (isNegative ? '-' : '') + parts.join('.');
-};
+import { formatAmount, formatUpdateTime } from '../utils/formatting';
 
 const HomeScreen = ({ navigation }) => {
   const {
@@ -196,21 +172,6 @@ const HomeScreen = ({ navigation }) => {
     return currency;
   };
 
-  // 格式化更新時間
-  const formatUpdateTime = () => {
-    if (!lastUpdate) return '';
-    const now = new Date();
-    const diff = Math.floor((now - lastUpdate) / 1000 / 60);
-
-    if (diff < 1) return t('justUpdated');
-    if (diff < 60) return `${diff}${t('updatedMinutesAgo')}`;
-
-    const hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const timeStr = `${hours}:${minutes}`;
-    return t('updatedToday', { time: timeStr });
-  };
-
   // 刪除貨幣
   const deleteCurrency = (currencyCode) => {
     if (!canRemove(selectedCurrencies, currencyCode)) {
@@ -294,7 +255,7 @@ const HomeScreen = ({ navigation }) => {
 
         <View style={styles.virtualAmountContainer}>
           <Text style={styles.virtualAmountText}>
-            {formatWithCommas(virtualAmount)}
+            {formatAmount(virtualAmount)}
           </Text>
         </View>
       </View>
@@ -369,7 +330,7 @@ const HomeScreen = ({ navigation }) => {
                 isActive && styles.amountInputActive
               ]}
               showSoftInputOnFocus={false}
-              value={formatWithCommas(amounts[currencyCode]?.toString() || '')}
+              value={formatAmount(amounts[currencyCode]?.toString() || '')}
               onFocus={() => handleInputFocus(currencyCode)}
               onChangeText={(value) => handleAmountChange(currencyCode, value)}
               keyboardType="decimal-pad"
@@ -417,7 +378,7 @@ const HomeScreen = ({ navigation }) => {
         {/* 更新時間與新增貨幣按鈕 */}
         <View style={styles.updateInfo}>
           {settings.showExchangeSource ? (
-            <Text style={styles.updateText}>🔄 {formatUpdateTime()}</Text>
+            <Text style={styles.updateText}>🔄 {formatUpdateTime(lastUpdate, t)}</Text>
           ) : <View />}
           
           {canAdd(selectedCurrencies) && (
